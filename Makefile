@@ -1,6 +1,8 @@
 # SalesEdge Makefile
 
-.PHONY: help bootstrap dev dev-backend dev-frontend test test-unit test-integration test-contract test-e2e test-performance test-backtest lint typecheck format build deploy rollback seed generate-types connector-matrix check-freshness
+SHELL := /bin/bash
+
+.PHONY: help bootstrap dev dev-backend dev-frontend intranet-proxy-up intranet-proxy-down test test-unit test-integration test-contract test-e2e test-performance test-backtest lint typecheck format build deploy rollback seed generate-types connector-matrix check-freshness
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -16,7 +18,14 @@ dev-backend:  ## Start backend only
 	cd backend && source .venv/bin/activate && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 dev-frontend:  ## Start frontend only
-	cd frontend && npm run dev
+	cd frontend && npm run dev -- --host 0.0.0.0 --port 5173
+
+intranet-proxy-up:  ## Expose app on intranet HTTP :80 via nginx reverse proxy
+	docker rm -f salesedge-intranet-proxy >/dev/null 2>&1 || true
+	docker run -d --name salesedge-intranet-proxy --restart unless-stopped -p 80:80 --add-host=host.docker.internal:host-gateway -v $(PWD)/infra/docker/nginx/intranet-dev-host.conf:/etc/nginx/nginx.conf:ro nginx:1.25-alpine
+
+intranet-proxy-down:  ## Stop intranet HTTP proxy container
+	docker rm -f salesedge-intranet-proxy >/dev/null 2>&1 || true
 
 # ─── Testing ───
 test:  ## Run all tests
