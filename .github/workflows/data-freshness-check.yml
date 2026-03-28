@@ -1,0 +1,53 @@
+name: Data freshness check
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  tier1-freshness:
+    name: Tier 1 data source staleness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check freshness API
+        env:
+          SALESEDGE_FRESHNESS_BASE_URL: ${{ secrets.SALESEDGE_FRESHNESS_BASE_URL }}
+        run: |
+          if [ -z "${SALESEDGE_FRESHNESS_BASE_URL}" ]; then
+            echo "::error::Set repository secret SALESEDGE_FRESHNESS_BASE_URL (e.g. https://api.example.com)"
+            exit 1
+          fi
+          BASE="${SALESEDGE_FRESHNESS_BASE_URL%/}"
+          echo "GET ${BASE}/api/v1/health/data-sources"
+          CODE=$(curl -sS -o /tmp/fresh.json -w "%{http_code}" "${BASE}/api/v1/health/data-sources") || exit 1
+          if [ "$CODE" != "200" ]; then
+            echo "::error::Freshness endpoint returned HTTP $CODE"
+            cat /tmp/fresh.json || true
+            exit 1
+          fi
+          python3 <<'PY'
+          import json
+          import sys
+          with open("/tmp/fresh.json", encoding="utf-8") as f:
+              root = json.load(f)
+          data = root.get("data") or root
+          sources = data.get("sources") or []
+          stale_count = int(data.get("stale_count") or 0)
+          tier1_bad = [
+              s
+              for s in sources
+              if s.get("tier") == 1 and s.get("status") in ("down", "degraded")
+          ]
+          if tier1_bad or stale_count > 0:
+              print("::error::Freshness check failed:", {"tier1_bad": tier1_bad, "stale_count": stale_count})
+              sys.exit(1)
+          print("Tier 1 freshness check passed.")
+          PY
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Data freshness workflow failed — connect alerts (Slack/email) via GitHub Actions or Alertmanager."

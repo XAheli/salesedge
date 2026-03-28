@@ -1,0 +1,57 @@
+[
+  {
+    "id": "intro_enterprise",
+    "name": "Enterprise Introduction",
+    "category": "cold_outreach",
+    "subject": "{{company_name}} + SalesEdge: Unlocking Revenue Intelligence for {{industry}}",
+    "body": "Dear {{contact_name}},\n\nI noticed {{company_name}} recently {{trigger_event}}. Given the pace of growth in {{industry}}, I thought you might find value in how companies like {{reference_customer}} are using SalesEdge to:\n\n- Increase pipeline velocity by 35% using AI-powered deal intelligence\n- Reduce churn risk with predictive early warnings\n- Leverage India-specific market signals (RBI policy, SEBI updates, budget announcements) for smarter prospecting\n\nWe're built ground-up for Indian B2B, with native integrations for GST, MCA data, and DPIIT startup intelligence.\n\nWould you have 20 minutes this week for a quick conversation?\n\nWarm regards,\n{{sender_name}}\n{{sender_title}}, SalesEdge",
+    "variables": ["company_name", "contact_name", "trigger_event", "industry", "reference_customer", "sender_name", "sender_title"],
+    "tone": "professional",
+    "follow_up_days": 5,
+    "target_persona": "VP Sales / CRO / Head of Revenue"
+  },
+  {
+    "id": "signal_triggered",
+    "name": "Market Signal Follow-Up",
+    "category": "signal_triggered",
+    "subject": "How {{signal_title}} impacts {{company_name}}'s sales strategy",
+    "body": "Hi {{contact_name}},\n\nI saw the recent news about {{signal_title}}. This could have significant implications for {{company_name}}'s {{affected_area}}.\n\nAt SalesEdge, we automatically ingest signals like these from RBI, SEBI, and 50+ Indian business intelligence sources, and correlate them with your pipeline to surface:\n\n- Deals at risk due to regulatory shifts\n- New prospects in sectors with tailwinds\n- Competitive moves that affect your positioning\n\nOur customers in {{industry}} typically see these signals 2-3 weeks before their competitors react.\n\nHappy to walk you through a live example with your industry data.\n\nBest,\n{{sender_name}}",
+    "variables": ["contact_name", "signal_title", "company_name", "affected_area", "industry", "sender_name"],
+    "tone": "consultative",
+    "follow_up_days": 3,
+    "target_persona": "Sales Leader / Strategy / BD Head"
+  },
+  {
+    "id": "competitor_displacement",
+    "name": "Competitive Displacement",
+    "category": "competitor_response",
+    "subject": "Why {{competitor}} users in India are switching to SalesEdge",
+    "body": "Hi {{contact_name}},\n\nI understand {{company_name}} currently uses {{competitor}} for CRM. We've been hearing from several {{industry}} companies that while {{competitor}} works globally, it falls short on India-specific needs:\n\n- No native INR formatting (lakhs/crores) or Indian number grouping\n- Limited integration with Indian data sources (MCA, GST, DPIIT, OGD)\n- Pricing that doesn't account for Indian team structures\n- No built-in understanding of Indian FY (April-March), regulatory calendar, or RBI policy impact\n\n{{reference_customer}} made the switch last quarter and saw a {{metric_improvement}} improvement in {{metric_area}}.\n\nWould a 15-minute comparison walkthrough be helpful?\n\nRegards,\n{{sender_name}}",
+    "variables": ["contact_name", "company_name", "competitor", "industry", "reference_customer", "metric_improvement", "metric_area", "sender_name"],
+    "tone": "direct",
+    "follow_up_days": 7,
+    "target_persona": "CTO / VP Sales Ops / Revenue Operations"
+  },
+  {
+    "id": "renewal_nurture",
+    "name": "Renewal & Expansion Nurture",
+    "category": "retention",
+    "subject": "Your SalesEdge journey: {{time_period}} highlights for {{company_name}}",
+    "body": "Hi {{contact_name}},\n\nAs we approach your renewal, I wanted to share some highlights from {{company_name}}'s SalesEdge usage over the past {{time_period}}:\n\n- Deals tracked: {{deals_count}} worth ₹{{pipeline_value_cr}} Cr\n- Win rate improvement: {{win_rate_delta}}% over baseline\n- Signals processed: {{signals_count}} market signals correlated with your pipeline\n- Churn risks flagged: {{churn_alerts}} early warnings actioned\n\nGiven this momentum, I'd love to discuss how we can deepen the value with:\n- {{expansion_feature_1}}\n- {{expansion_feature_2}}\n\nShall we schedule a review call next week?\n\nBest,\n{{sender_name}}\nCustomer Success, SalesEdge",
+    "variables": ["contact_name", "company_name", "time_period", "deals_count", "pipeline_value_cr", "win_rate_delta", "signals_count", "churn_alerts", "expansion_feature_1", "expansion_feature_2", "sender_name"],
+    "tone": "warm",
+    "follow_up_days": 5,
+    "target_persona": "Champion / Primary User / VP Sales"
+  },
+  {
+    "id": "startup_intro",
+    "name": "Startup / DPIIT Introduction",
+    "category": "cold_outreach",
+    "subject": "Built for Indian startups: Sales intelligence that scales with {{company_name}}",
+    "body": "Hi {{contact_name}},\n\nCongratulations on {{company_name}}'s growth — {{trigger_event}}.\n\nAs a DPIIT-recognised startup scaling rapidly, you need a sales stack that understands the Indian market from day one. SalesEdge is purpose-built for this:\n\n- Start free, scale as you grow (startup-friendly pricing)\n- Auto-enrichment from MCA, DPIIT, and Indian business data\n- AI deal coaching calibrated for Indian B2B sales cycles\n- Pipeline analytics in lakhs/crores with FY-aligned reporting\n\nWe're trusted by {{startup_count}}+ Indian startups including {{reference_startups}}.\n\nWant to see a 10-minute demo tailored for {{industry}}?\n\nCheers,\n{{sender_name}}",
+    "variables": ["contact_name", "company_name", "trigger_event", "startup_count", "reference_startups", "industry", "sender_name"],
+    "tone": "casual",
+    "follow_up_days": 4,
+    "target_persona": "Founder / Co-Founder / Head of Sales"
+  }
+]

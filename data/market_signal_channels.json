@@ -1,0 +1,131 @@
+{
+  "channels": [
+    {
+      "id": "rbi_policy",
+      "name": "RBI Monetary Policy",
+      "source_type": "government",
+      "connector": "rbi_dbie",
+      "refresh_cron": "0 12 * * *",
+      "priority": 1,
+      "signal_types": ["policy_rate_change", "liquidity_action", "regulatory_update"],
+      "affected_sectors": ["Banking", "Financial Services", "Real Estate"],
+      "keywords": ["repo rate", "CRR", "SLR", "monetary policy", "MPC"],
+      "enabled": true
+    },
+    {
+      "id": "sebi_circulars",
+      "name": "SEBI Regulatory Circulars",
+      "source_type": "government",
+      "connector": "sebi",
+      "refresh_cron": "0 10 * * 1-5",
+      "priority": 2,
+      "signal_types": ["regulatory_update"],
+      "affected_sectors": ["Financial Services", "Wealth Management", "Capital Markets"],
+      "keywords": ["circular", "regulation", "compliance", "AIF", "mutual fund", "FPI"],
+      "enabled": true
+    },
+    {
+      "id": "ogd_economic",
+      "name": "OGD India Economic Data",
+      "source_type": "government",
+      "connector": "ogd_india",
+      "refresh_cron": "0 18 * * *",
+      "priority": 3,
+      "signal_types": ["economic_indicator"],
+      "affected_sectors": ["All"],
+      "keywords": ["GDP", "IIP", "CPI", "WPI", "trade balance"],
+      "enabled": true
+    },
+    {
+      "id": "nse_corporate_actions",
+      "name": "NSE Corporate Actions & Filings",
+      "source_type": "exchange",
+      "connector": "nse",
+      "refresh_cron": "0 */4 * * 1-5",
+      "priority": 2,
+      "signal_types": ["corporate_action", "earnings_release", "board_meeting"],
+      "affected_sectors": ["All Listed Companies"],
+      "keywords": ["quarterly results", "board meeting", "AGM", "dividend", "stock split"],
+      "enabled": true
+    },
+    {
+      "id": "bse_announcements",
+      "name": "BSE Corporate Announcements",
+      "source_type": "exchange",
+      "connector": "bse",
+      "refresh_cron": "0 */4 * * 1-5",
+      "priority": 2,
+      "signal_types": ["corporate_action", "earnings_release"],
+      "affected_sectors": ["All Listed Companies"],
+      "keywords": ["announcement", "disclosure", "results"],
+      "enabled": true
+    },
+    {
+      "id": "business_news_rss",
+      "name": "Business News RSS Aggregator",
+      "source_type": "news",
+      "connector": "rss_business",
+      "refresh_cron": "*/30 * * * *",
+      "priority": 4,
+      "signal_types": ["industry_news", "competitor_funding", "technology_change"],
+      "affected_sectors": ["All"],
+      "keywords": [],
+      "enabled": true
+    },
+    {
+      "id": "mca_filings",
+      "name": "MCA Company Filings",
+      "source_type": "government",
+      "connector": "mca",
+      "refresh_cron": "0 6 * * *",
+      "priority": 3,
+      "signal_types": ["corporate_action", "regulatory_update"],
+      "affected_sectors": ["All"],
+      "keywords": ["annual return", "financial statement", "charge creation", "director change"],
+      "enabled": true
+    },
+    {
+      "id": "budget_tracker",
+      "name": "Union Budget & Policy Monitor",
+      "source_type": "government",
+      "connector": "ogd_india",
+      "refresh_cron": "0 12 1 2 *",
+      "priority": 1,
+      "signal_types": ["budget_announcement"],
+      "affected_sectors": ["All"],
+      "keywords": ["union budget", "PLI", "capex", "fiscal deficit", "tax"],
+      "enabled": true
+    },
+    {
+      "id": "startup_funding_tracker",
+      "name": "Startup Funding & DPIIT Updates",
+      "source_type": "news",
+      "connector": "rss_business",
+      "refresh_cron": "0 */6 * * *",
+      "priority": 4,
+      "signal_types": ["competitor_funding", "industry_news"],
+      "affected_sectors": ["SaaS", "Fintech", "Startups"],
+      "keywords": ["funding", "series", "raised", "valuation", "unicorn", "DPIIT"],
+      "enabled": true
+    },
+    {
+      "id": "macro_indicators",
+      "name": "MOSPI Macro Indicators",
+      "source_type": "government",
+      "connector": "mospi",
+      "refresh_cron": "0 18 * * *",
+      "priority": 3,
+      "signal_types": ["economic_indicator"],
+      "affected_sectors": ["All"],
+      "keywords": ["GDP", "GVA", "CPI", "WPI", "PMI", "IIP"],
+      "enabled": true
+    }
+  ],
+  "global_config": {
+    "max_concurrent_fetches": 5,
+    "retry_backoff_seconds": [10, 30, 120],
+    "dead_letter_queue_enabled": true,
+    "signal_dedup_window_hours": 48,
+    "minimum_impact_score_to_persist": 3.0
+  }
+}

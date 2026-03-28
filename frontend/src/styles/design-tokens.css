@@ -1,0 +1,155 @@
+:root {
+  /* ─── Primary Brand Colors (Warm) ─── */
+  --color-primary-50: #FFF8F0;
+  --color-primary-100: #FFEDD5;
+  --color-primary-200: #FED7AA;
+  --color-primary-300: #FDBA74;
+  --color-primary-400: #FB923C;
+  --color-primary-500: #F97316;
+  --color-primary-600: #EA580C;
+  --color-primary-700: #C2410C;
+  --color-primary-800: #9A3412;
+  --color-primary-900: #7C2D12;
+
+  /* ─── Semantic Colors ─── */
+  --color-revenue-positive: #059669;
+  --color-revenue-positive-bg: #D1FAE5;
+  --color-caution: #D97706;
+  --color-caution-bg: #FEF3C7;
+  --color-risk: #DC2626;
+  --color-risk-bg: #FEE2E2;
+  --color-neutral: #6B7280;
+  --color-neutral-bg: #F3F4F6;
+  --color-data-quality: #7C3AED;
+  --color-data-quality-bg: #EDE9FE;
+  --color-info: #2563EB;
+  --color-info-bg: #DBEAFE;
+
+  /* ─── Surface Colors ─── */
+  --surface-background: #FFFBF5;
+  --surface-card: #FFFFFF;
+  --surface-card-hover: #FFF8F0;
+  --surface-sidebar: #1C1917;
+  --surface-sidebar-text: #FAFAF9;
+  --surface-sidebar-active: #F97316;
+  --surface-header: #FFFFFF;
+  --surface-modal-overlay: rgba(28, 25, 23, 0.6);
+
+  /* ─── Text Colors ─── */
+  --text-primary: #1C1917;
+  --text-secondary: #57534E;
+  --text-tertiary: #A8A29E;
+  --text-inverse: #FAFAF9;
+  --text-link: #EA580C;
+
+  /* ─── Chart Colors (ordered sequence for multi-series) ─── */
+  --chart-1: #F97316;
+  --chart-2: #059669;
+  --chart-3: #7C3AED;
+  --chart-4: #2563EB;
+  --chart-5: #DC2626;
+  --chart-6: #D97706;
+  --chart-7: #0891B2;
+  --chart-8: #BE185D;
+
+  /* ─── Typography ─── */
+  --font-sans: "Inter", "Noto Sans", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", "Fira Code", monospace;
+  --font-display: "Plus Jakarta Sans", var(--font-sans);
+
+  /* ─── Spacing Scale ─── */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* ─── Border Radius ─── */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+
+  /* ─── Shadows ─── */
+  --shadow-sm: 0 1px 2px 0 rgba(28, 25, 23, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(28, 25, 23, 0.07),
+    0 2px 4px -2px rgba(28, 25, 23, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(28, 25, 23, 0.08),
+    0 4px 6px -4px rgba(28, 25, 23, 0.04);
+  --shadow-card: 0 1px 3px 0 rgba(28, 25, 23, 0.06),
+    0 1px 2px -1px rgba(28, 25, 23, 0.06);
+
+  /* ─── Transitions ─── */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─── Dark Mode Override ─── */
+[data-theme="dark"] {
+  --color-primary-50: #431407;
+  --color-primary-100: #7C2D12;
+  --color-primary-200: #9A3412;
+  --color-primary-300: #C2410C;
+  --color-primary-400: #EA580C;
+  --color-primary-500: #F97316;
+  --color-primary-600: #FB923C;
+  --color-primary-700: #FDBA74;
+  --color-primary-800: #FED7AA;
+  --color-primary-900: #FFEDD5;
+
+  --color-revenue-positive: #34D399;
+  --color-revenue-positive-bg: #064E3B;
+  --color-caution: #FBBF24;
+  --color-caution-bg: #78350F;
+  --color-risk: #F87171;
+  --color-risk-bg: #7F1D1D;
+  --color-neutral: #9CA3AF;
+  --color-neutral-bg: #374151;
+  --color-data-quality: #A78BFA;
+  --color-data-quality-bg: #4C1D95;
+  --color-info: #60A5FA;
+  --color-info-bg: #1E3A5F;
+
+  --surface-background: #1C1917;
+  --surface-card: #292524;
+  --surface-card-hover: #44403C;
+  --surface-sidebar: #0C0A09;
+  --surface-sidebar-text: #FAFAF9;
+  --surface-sidebar-active: #F97316;
+  --surface-header: #292524;
+  --surface-modal-overlay: rgba(0, 0, 0, 0.75);
+
+  --text-primary: #FAFAF9;
+  --text-secondary: #D6D3D1;
+  --text-tertiary: #A8A29E;
+  --text-inverse: #1C1917;
+  --text-link: #FB923C;
+
+  --chart-1: #FB923C;
+  --chart-2: #34D399;
+  --chart-3: #A78BFA;
+  --chart-4: #60A5FA;
+  --chart-5: #F87171;
+  --chart-6: #FBBF24;
+  --chart-7: #22D3EE;
+  --chart-8: #F472B6;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4),
+    0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5),
+    0 4px 6px -4px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.4),
+    0 1px 2px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* ─── Reduced Motion ─── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --transition-fast: 0ms;
+    --transition-normal: 0ms;
+    --transition-slow: 0ms;
+  }
+}

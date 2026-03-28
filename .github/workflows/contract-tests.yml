@@ -1,0 +1,83 @@
+name: Contract tests
+
+on:
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+  SE_OGD_API_KEY: contract-test-placeholder
+
+jobs:
+  contract-and-openapi:
+    name: API contracts & OpenAPI types
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: salesedge
+          POSTGRES_PASSWORD: salesedge_ci
+          POSTGRES_DB: salesedge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U salesedge"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    env:
+      SE_DATABASE_URL: postgresql+asyncpg://salesedge:salesedge_ci@localhost:5432/salesedge
+      SE_REDIS_URL: redis://localhost:6379/0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install backend deps & start API
+        working-directory: backend
+        run: |
+          uv pip install --system -r requirements.txt pytest pytest-asyncio
+          uv pip install --system uvicorn
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:8000/api/v1/health && break
+            sleep 1
+          done
+
+      - name: Pytest contract suite
+        working-directory: backend
+        run: |
+          if [ -d tests/contract ]; then
+            pytest tests/contract -v --tb=short
+          else
+            echo "No tests/contract directory; skipping pytest contract suite."
+          fi
+
+      - name: Validate TypeScript types vs OpenAPI
+        run: |
+          npx --yes openapi-typescript@7 http://127.0.0.1:8000/openapi.json -o /tmp/api-generated.ts
+          if [ ! -f frontend/src/types/api/generated.ts ]; then
+            echo "::error::frontend/src/types/api/generated.ts missing — run: bash scripts/generate-types.sh (backend running) then commit."
+            exit 1
+          fi
+          diff -u frontend/src/types/api/generated.ts /tmp/api-generated.ts

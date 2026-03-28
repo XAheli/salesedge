@@ -1,0 +1,101 @@
+{
+  "template_version": "1.0",
+  "sections": [
+    {
+      "id": "competitor_overview",
+      "title": "Competitor Overview",
+      "fields": [
+        {"key": "competitor_name", "label": "Competitor", "type": "text"},
+        {"key": "headquarters", "label": "HQ", "type": "text"},
+        {"key": "founded", "label": "Founded", "type": "year"},
+        {"key": "employees", "label": "Employees", "type": "number"},
+        {"key": "revenue", "label": "Revenue", "type": "inr"},
+        {"key": "market_position", "label": "Market Position", "type": "text"},
+        {"key": "india_presence", "label": "India Presence", "type": "enum", "options": ["strong", "moderate", "weak", "none"]},
+        {"key": "target_segments", "label": "Target Segments", "type": "tags"}
+      ]
+    },
+    {
+      "id": "product_comparison",
+      "title": "Product Comparison Matrix",
+      "fields": [
+        {"key": "features", "label": "Feature Comparison", "type": "comparison_table", "columns": ["Feature", "SalesEdge", "Competitor", "Winner"]},
+        {"key": "india_specific_features", "label": "India-Specific Features", "type": "comparison_table", "columns": ["Feature", "SalesEdge", "Competitor"]},
+        {"key": "tech_stack", "label": "Technology Stack", "type": "text"},
+        {"key": "api_ecosystem", "label": "API / Integration Ecosystem", "type": "text"}
+      ]
+    },
+    {
+      "id": "pricing",
+      "title": "Pricing Intelligence",
+      "fields": [
+        {"key": "pricing_model", "label": "Pricing Model", "type": "text"},
+        {"key": "india_pricing", "label": "India-Specific Pricing", "type": "text"},
+        {"key": "typical_deal_size_inr", "label": "Typical Deal Size (INR)", "type": "inr"},
+        {"key": "discount_practices", "label": "Discount Practices", "type": "text"},
+        {"key": "our_pricing_advantage", "label": "Our Pricing Advantage", "type": "text"}
+      ]
+    },
+    {
+      "id": "strengths_weaknesses",
+      "title": "Strengths & Weaknesses",
+      "fields": [
+        {"key": "competitor_strengths", "label": "Their Strengths", "type": "bullet_list"},
+        {"key": "competitor_weaknesses", "label": "Their Weaknesses", "type": "bullet_list"},
+        {"key": "our_advantages", "label": "Our Advantages", "type": "bullet_list"},
+        {"key": "our_gaps", "label": "Areas We Need to Improve", "type": "bullet_list"}
+      ]
+    },
+    {
+      "id": "objection_handling",
+      "title": "Objection Handling",
+      "fields": [
+        {"key": "objections", "label": "Common Objections & Responses", "type": "objection_response_pairs"}
+      ]
+    },
+    {
+      "id": "win_loss_insights",
+      "title": "Win/Loss Intelligence",
+      "fields": [
+        {"key": "win_rate_against", "label": "Our Win Rate Against Them", "type": "percent"},
+        {"key": "total_competitive_deals", "label": "Competitive Deals (last 12 months)", "type": "number"},
+        {"key": "common_loss_reasons", "label": "Why We Lose", "type": "bullet_list"},
+        {"key": "common_win_reasons", "label": "Why We Win", "type": "bullet_list"},
+        {"key": "notable_wins", "label": "Notable Wins", "type": "deal_references"},
+        {"key": "notable_losses", "label": "Notable Losses", "type": "deal_references"}
+      ]
+    },
+    {
+      "id": "landmines",
+      "title": "Competitive Landmines",
+      "fields": [
+        {"key": "questions_to_ask", "label": "Questions That Expose Their Weakness", "type": "bullet_list"},
+        {"key": "traps_they_set", "label": "Traps They Set For Us", "type": "bullet_list"},
+        {"key": "proof_points", "label": "Proof Points / Case Studies", "type": "bullet_list"}
+      ]
+    },
+    {
+      "id": "india_context",
+      "title": "India Market Context",
+      "fields": [
+        {"key": "india_team_size", "label": "India Team Size", "type": "number"},
+        {"key": "india_customers", "label": "Known India Customers", "type": "tags"},
+        {"key": "india_data_residency", "label": "India Data Residency", "type": "enum", "options": ["yes", "no", "partial"]},
+        {"key": "gst_integration", "label": "GST Integration", "type": "boolean"},
+        {"key": "inr_support", "label": "INR / Lakhs-Crores Support", "type": "boolean"},
+        {"key": "indian_language_support", "label": "Indian Language Support", "type": "tags"},
+        {"key": "india_partner_ecosystem", "label": "India Partner Ecosystem", "type": "text"}
+      ]
+    }
+  ],
+  "competitors": [
+    {"id": "salesforce", "name": "Salesforce", "priority": "high"},
+    {"id": "zoho_crm", "name": "Zoho CRM", "priority": "high"},
+    {"id": "hubspot", "name": "HubSpot", "priority": "high"},
+    {"id": "freshsales", "name": "Freshsales (Freshworks)", "priority": "medium"},
+    {"id": "microsoft_dynamics", "name": "Microsoft Dynamics 365", "priority": "medium"},
+    {"id": "pipedrive", "name": "Pipedrive", "priority": "low"},
+    {"id": "leadsquared", "name": "LeadSquared", "priority": "medium"},
+    {"id": "veeva", "name": "Veeva CRM (Pharma)", "priority": "niche"}
+  ]
+}

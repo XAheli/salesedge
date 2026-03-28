@@ -1,0 +1,23 @@
+# syntax=docker/dockerfile:1
+# Development image — mount ./backend to /app for live reload.
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+RUN pip install --no-cache-dir uv
+
+WORKDIR /app
+
+COPY requirements.txt ./
+COPY app ./app
+
+# Editable hatch install is omitted — pyproject has no wheel package mapping yet.
+RUN uv pip install --system --no-cache -r requirements.txt \
+    && uv pip install --system --no-cache \
+        "pytest>=8.3.0" "pytest-asyncio>=0.24.0" "pytest-cov>=6.0.0" \
+        "mypy>=1.13.0" "ruff>=0.8.0" "httpx>=0.28.0" "factory-boy>=3.3.0"
+
+EXPOSE 8000
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

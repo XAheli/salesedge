@@ -1,0 +1,22 @@
+{
+  "allowed_domains": [
+    {"domain": "economictimes.indiatimes.com", "name": "Economic Times", "category": "business", "rss_url": "https://economictimes.indiatimes.com/rssfeedstopstories.cms"},
+    {"domain": "livemint.com", "name": "Livemint", "category": "business", "rss_url": "https://www.livemint.com/rss/news"},
+    {"domain": "moneycontrol.com", "name": "Moneycontrol", "category": "finance", "rss_url": "https://www.moneycontrol.com/rss/latestnews.xml"},
+    {"domain": "business-standard.com", "name": "Business Standard", "category": "business", "rss_url": "https://www.business-standard.com/rss/home_page_top_stories.rss"},
+    {"domain": "financialexpress.com", "name": "Financial Express", "category": "finance", "rss_url": "https://www.financialexpress.com/feed/"},
+    {"domain": "thehindubusinessline.com", "name": "Hindu BusinessLine", "category": "business", "rss_url": "https://www.thehindubusinessline.com/feeder/default.rss"},
+    {"domain": "cnbctv18.com", "name": "CNBC TV18", "category": "business", "rss_url": "https://www.cnbctv18.com/commonfeeds/v1/cne/rss/"},
+    {"domain": "ndtvprofit.com", "name": "NDTV Profit", "category": "finance", "rss_url": "https://feeds.feedburner.com/ndtvprofit-latest"},
+    {"domain": "reuters.com", "name": "Reuters", "category": "global", "rss_url": "https://www.reuters.com/rssFeed/businessNews"},
+    {"domain": "bloomberg.com", "name": "Bloomberg", "category": "global", "rss_url": null},
+    {"domain": "inc42.com", "name": "Inc42", "category": "startup", "rss_url": "https://inc42.com/feed/"},
+    {"domain": "yourstory.com", "name": "YourStory", "category": "startup", "rss_url": "https://yourstory.com/feed"},
+    {"domain": "entrackr.com", "name": "Entrackr", "category": "startup", "rss_url": "https://entrackr.com/feed/"},
+    {"domain": "techcrunch.com", "name": "TechCrunch", "category": "technology", "rss_url": "https://techcrunch.com/feed/"},
+    {"domain": "nasscom.in", "name": "NASSCOM", "category": "industry", "rss_url": null}
+  ],
+  "refresh_interval_minutes": 30,
+  "max_articles_per_source": 50,
+  "dedup_window_hours": 72
+}

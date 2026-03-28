@@ -1,0 +1,181 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main, master]
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  NODE_VERSION: "20"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python-version: "3.12"
+            node-version: "20"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Ruff (backend)
+        working-directory: backend
+        run: |
+          uv pip install --system -r requirements.txt ruff
+          ruff check .
+          ruff format --check .
+
+      - name: ESLint (frontend)
+        working-directory: frontend
+        run: |
+          npm ci 2>/dev/null || npm install
+          npm run lint
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - python-version: "3.12"
+            node-version: "20"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: mypy (backend)
+        working-directory: backend
+        run: |
+          uv pip install --system -r requirements.txt mypy
+          mypy app --strict
+
+      - name: tsc (frontend)
+        working-directory: frontend
+        run: |
+          npm ci 2>/dev/null || npm install
+          npm run typecheck
+
+  test-backend:
+    name: Test backend
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: salesedge
+          POSTGRES_PASSWORD: salesedge_ci
+          POSTGRES_DB: salesedge
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U salesedge"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      SE_DATABASE_URL: postgresql+asyncpg://salesedge:salesedge_ci@localhost:5432/salesedge
+      SE_REDIS_URL: redis://localhost:6379/0
+      SE_OGD_API_KEY: ci-placeholder-key
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Pytest with coverage
+        working-directory: backend
+        run: |
+          uv pip install --system -r requirements.txt pytest pytest-asyncio pytest-cov
+          pytest --cov=app --cov-report=xml --cov-report=term-missing -q
+
+      - name: Upload backend coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: backend/coverage.xml
+          flags: backend
+          fail_ci_if_error: false
+
+  test-frontend:
+    name: Test frontend
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: ["20"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Vitest + coverage
+        working-directory: frontend
+        run: |
+          npm ci 2>/dev/null || npm install
+          npm run test:coverage
+
+      - name: Upload frontend coverage
+        uses: codecov/codecov-action@v4
+        with:
+          files: frontend/coverage/coverage-final.json
+          flags: frontend
+          fail_ci_if_error: false
