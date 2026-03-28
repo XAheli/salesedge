@@ -4,6 +4,17 @@ All notable changes to **SalesEdge — Intelligent Sales & Revenue Operations Pl
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- Hardened developer startup workflow: Makefile now runs recipes with Bash and `make dev-frontend` binds to `0.0.0.0` for LAN testing.
+- Added intranet reverse-proxy workflow (`make intranet-proxy-up` / `make intranet-proxy-down`) with documentation for port-80 access.
+
+### Fixed
+
+- Backend editable build for `uv run` now has explicit Hatch wheel package selection (`packages = ["app"]`).
+
 ## [1.0.0] - 2026-03-28
 
 ### Added

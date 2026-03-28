@@ -62,6 +62,11 @@ make dev-frontend
 
 # 7. Open http://localhost:5173
 #    → Register → Dashboard with real data
+
+# 8. Optional: expose UI/API on intranet HTTP :80
+make intranet-proxy-up
+#    → open http://<your-server-lan-ip>/ from other machines
+#    → proxy routes /api/* and /ws/* to backend
 ```
 
 ### What `make bootstrap` does
@@ -99,7 +104,9 @@ make dev-frontend
 |---------|-------------|
 | `make bootstrap` | **Run first.** Full setup: installs deps, starts DB, seeds data |
 | `make dev-backend` | Start FastAPI server on :8000 with auto-reload |
-| `make dev-frontend` | Start Vite + React on :5173 with hot reload |
+| `make dev-frontend` | Start Vite + React on :5173 (binds to `0.0.0.0` for LAN testing) |
+| `make intranet-proxy-up` | Start nginx reverse proxy on :80 for intranet access |
+| `make intranet-proxy-down` | Stop and remove the intranet reverse proxy |
 | `make dev` | Start full stack via Docker Compose |
 | `make test` | Run all tests (backend + frontend) |
 | `make test-unit` | Backend unit tests only |

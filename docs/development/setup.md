@@ -39,7 +39,23 @@ Runs Uvicorn with reload on `http://0.0.0.0:8000`. Ensure `SE_OGD_API_KEY` and D
 make dev-frontend
 ```
 
-Vite dev server (default `http://localhost:5173`). `VITE_API_BASE_URL` should point at the API.
+Vite dev server (default `http://localhost:5173`) bound on `0.0.0.0` for LAN access.
+
+## Optional: expose app on intranet HTTP :80
+
+Run backend and frontend first, then start the reverse proxy:
+
+```bash
+make intranet-proxy-up
+```
+
+Open `http://<server-lan-ip>/` from other machines in your intranet.
+
+To stop/remove the proxy container:
+
+```bash
+make intranet-proxy-down
+```
 
 ## Full stack via Compose
 
