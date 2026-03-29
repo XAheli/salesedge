@@ -7,7 +7,7 @@
 <p align="center"><strong>Intelligent Sales & Revenue Operations Platform</strong></p>
 
 
-An India-focused AI platform for enterprise sales teams. Integrates government data (data.gov.in, RBI, MOSPI, SEBI), Indian market data (NSE, BSE), and 25+ financial APIs to power prospect intelligence, deal risk scoring, churn prediction, and competitive analysis.
+An India focused AI platform for enterprise sales teams. Integrates government data (data.gov.in, RBI, MOSPI, SEBI), Indian market data (NSE, BSE), and 25+ financial APIs to power prospect intelligence, deal risk scoring, churn prediction, and competitive analysis.
 
 
 ## How to Run Locally
