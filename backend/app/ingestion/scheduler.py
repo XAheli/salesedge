@@ -190,6 +190,16 @@ class IngestionScheduler:
                 timezone="Asia/Kolkata",
             )
 
+        start_time = schedule.get("start_time")
+        end_time = schedule.get("end_time")
+        if start_time and end_time:
+            return CronTrigger(
+                minute=f"*/{schedule.get('minutes', 15)}",
+                hour=f"{start_time.hour}-{end_time.hour}",
+                day_of_week="mon-fri",
+                timezone="Asia/Kolkata",
+            )
+
         return IntervalTrigger(
             minutes=schedule.get("minutes", 60),
             timezone="Asia/Kolkata",

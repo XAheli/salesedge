@@ -1,0 +1,61 @@
+%% SalesEdge — System Context Diagram (C4 Level 1)
+%% Shows actors and external systems interacting with SalesEdge
+
+graph TB
+    subgraph Users
+        SE_USER["Sales Rep / Manager<br/><i>Browser or Mobile</i>"]
+        ADMIN["Platform Admin<br/><i>Settings & Monitoring</i>"]
+    end
+
+    SE["<b>SalesEdge Platform</b><br/>Intelligent Sales &<br/>Revenue Operations"]
+
+    subgraph Government APIs
+        OGD["data.gov.in (OGD)"]
+        RBI["RBI DBIE"]
+        MOSPI["MOSPI"]
+        SEBI["SEBI EDIFAR"]
+        MCA["MCA Portal"]
+    end
+
+    subgraph Market Data
+        NSE["NSE India"]
+        BSE["BSE India"]
+        BROKER["Broker APIs<br/><i>Zerodha, Dhan, Upstox,<br/>Angel One, ICICI, Fyers</i>"]
+    end
+
+    subgraph Enrichment APIs
+        FINNHUB["Finnhub"]
+        ALPHA["Alpha Vantage"]
+        FMP["Financial Modeling Prep"]
+        COINGECKO["CoinGecko"]
+        FX["FX Rate APIs<br/><i>ExchangeRate, OpenExchange</i>"]
+    end
+
+    subgraph LLM Providers
+        OPENROUTER["OpenRouter"]
+        OPENAI["OpenAI"]
+        OLLAMA["Ollama (local)"]
+    end
+
+    SE_USER -->|"HTTPS"| SE
+    ADMIN -->|"HTTPS"| SE
+
+    SE -->|"REST"| OGD
+    SE -->|"REST"| RBI
+    SE -->|"REST/Scrape"| MOSPI
+    SE -->|"REST"| SEBI
+    SE -->|"REST"| MCA
+
+    SE -->|"REST"| NSE
+    SE -->|"REST"| BSE
+    SE -->|"REST"| BROKER
+
+    SE -->|"REST"| FINNHUB
+    SE -->|"REST"| ALPHA
+    SE -->|"REST"| FMP
+    SE -->|"REST"| COINGECKO
+    SE -->|"REST"| FX
+
+    SE -->|"REST"| OPENROUTER
+    SE -->|"REST"| OPENAI
+    SE -->|"REST"| OLLAMA

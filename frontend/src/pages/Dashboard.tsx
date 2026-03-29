@@ -7,20 +7,18 @@ import {
   AlertTriangle,
   RefreshCw,
 } from "lucide-react";
-import {
-  AreaChart,
-  Area,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts";
+import { AreaChart, Area, ResponsiveContainer } from "recharts";
 import { useExecutiveSummary } from "@/api/hooks/useDashboard";
 import { formatINR } from "@/utils/indian-formatting";
+import { classifyRisk, RISK_BANDS } from "@/utils/risk-bands";
 import { ConfidenceBadge } from "@/components/data-display/ConfidenceBadge";
 import { SkeletonCard, SkeletonTable, SkeletonChart } from "@/components/data-display/LoadingSkeleton";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
-import type { KPIMetric, ExecutiveSummary } from "@/types/api";
+import { RevenueForecast } from "@/components/charts/RevenueForecast";
+import { FunnelWaterfall } from "@/components/charts/FunnelWaterfall";
+import { DealRiskScatter } from "@/components/charts/DealRiskScatter";
+import { PipelineVelocity } from "@/components/charts/PipelineVelocity";
+import type { KPIMetric } from "@/types/api";
 
 function TrendIcon({ direction }: { direction: string }) {
   if (direction === "up") return <TrendingUp size={14} />;
@@ -99,148 +97,12 @@ function KpiCard({ label, metric }: { label: string; metric: KPIMetric }) {
   );
 }
 
-function RevenueSparkline({ kpis }: { kpis: ExecutiveSummary["kpis"] }) {
-  const chartData = useMemo(() => {
-    const arr = kpis.arr.sparkline ?? [];
-    return arr.map((v, i) => ({ idx: i, value: v }));
-  }, [kpis.arr.sparkline]);
-
-  if (chartData.length < 2) {
-    return (
-      <p className="text-sm text-text-tertiary">
-        Not enough data for revenue sparkline
-      </p>
-    );
-  }
-
-  return (
-    <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-        <defs>
-          <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#3B82F6" stopOpacity={0.25} />
-            <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <XAxis dataKey="idx" hide />
-        <YAxis hide domain={["dataMin", "dataMax"]} />
-        <Tooltip
-          formatter={(v: number) => [formatINR(v, { compact: true }), "Revenue"]}
-          contentStyle={{
-            background: "var(--color-surface-card, #fff)",
-            border: "1px solid var(--color-neutral-bg, #e5e7eb)",
-            borderRadius: 8,
-            fontSize: 12,
-          }}
-        />
-        <Area
-          type="monotone"
-          dataKey="value"
-          stroke="#3B82F6"
-          strokeWidth={2}
-          fill="url(#revGrad)"
-          dot={false}
-        />
-      </AreaChart>
-    </ResponsiveContainer>
-  );
-}
-
-interface FunnelStage {
-  name?: string;
-  stage_name?: string;
-  count: number;
-  value_inr?: number;
-  conversion_rate: number;
-}
-
-function PipelineFunnel({ stages, overallConversion }: { stages: FunnelStage[]; overallConversion?: number }) {
-  const maxCount = Math.max(...stages.map((s) => s.count), 1);
-  const colors = [
-    "bg-primary-200",
-    "bg-primary-300",
-    "bg-primary-400",
-    "bg-primary-500",
-    "bg-primary-600",
-    "bg-primary-700",
-  ];
-
-  return (
-    <div className="space-y-3">
-      {stages.map((s, i) => {
-        const label = s.stage_name ?? s.name ?? `Stage ${i + 1}`;
-        return (
-          <div key={label}>
-            <div className="mb-1 flex justify-between text-xs">
-              <span className="text-text-secondary">{label}</span>
-              <span className="font-medium text-text-primary">
-                {s.count} · {(s.conversion_rate * 100).toFixed(0)}%
-                {s.value_inr != null && (
-                  <span className="ml-2 text-text-tertiary">
-                    {formatINR(s.value_inr, { compact: true })}
-                  </span>
-                )}
-              </span>
-            </div>
-            <div className="h-3 overflow-hidden rounded-full bg-neutral-bg">
-              <div
-                className={`h-full rounded-full ${colors[i % colors.length]} transition-all`}
-                style={{ width: `${(s.count / maxCount) * 100}%` }}
-              />
-            </div>
-          </div>
-        );
-      })}
-      {overallConversion != null && (
-        <p className="text-xs text-text-tertiary">
-          Overall conversion: {(overallConversion * 100).toFixed(1)}%
-        </p>
-      )}
-    </div>
-  );
-}
-
-interface HeatmapCell {
-  segment: string;
-  risk_level: string;
-  deal_count: number;
-  total_value_inr: number;
-}
-
-function RiskHeatmap({ cells }: { cells: HeatmapCell[] }) {
-  if (!cells?.length) {
-    return <p className="text-sm text-text-tertiary">No risk data available</p>;
-  }
-
-  const riskColors: Record<string, string> = {
-    low: "bg-revenue-positive/20 text-revenue-positive",
-    medium: "bg-caution/20 text-caution",
-    high: "bg-risk/20 text-risk",
-    critical: "bg-red-800/20 text-red-800",
-  };
-
-  return (
-    <div className="space-y-2">
-      {cells.map((cell, i) => (
-        <div
-          key={`${cell.segment}-${cell.risk_level}-${i}`}
-          className={`flex items-center justify-between rounded-lg px-3 py-2 ${
-            riskColors[cell.risk_level] ?? "bg-neutral-bg text-text-secondary"
-          }`}
-        >
-          <div>
-            <p className="text-sm font-medium">{cell.segment}</p>
-            <p className="text-xs opacity-75 capitalize">{cell.risk_level} risk</p>
-          </div>
-          <div className="text-right">
-            <p className="text-sm font-semibold">{cell.deal_count} deals</p>
-            <p className="text-xs">{formatINR(cell.total_value_inr, { compact: true })}</p>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+const RISK_LEVEL_SCORE: Record<string, number> = {
+  low: 20,
+  medium: 45,
+  high: 70,
+  critical: 90,
+};
 
 interface TopDeal {
   id?: string;
@@ -271,12 +133,7 @@ function TopDealsTable({ deals, title }: { deals: TopDeal[]; title: string }) {
           const displayName = d.prospect_name ?? d.name ?? d.account ?? "Unknown";
           const val = d.value_inr ?? d.value ?? 0;
           const risk = d.risk_score ?? 0;
-          const riskColor =
-            risk > 0.6
-              ? "text-risk"
-              : risk > 0.3
-                ? "text-caution"
-                : "text-revenue-positive";
+          const riskColor = RISK_BANDS[classifyRisk(risk)].color;
           return (
             <Link
               key={d.id ?? i}
@@ -295,7 +152,7 @@ function TopDealsTable({ deals, title }: { deals: TopDeal[]; title: string }) {
                 {formatINR(val, { compact: true })}
               </span>
               <span className={`text-xs font-medium ${riskColor}`}>
-                {(risk * 100).toFixed(0)}%
+                {risk.toFixed(0)}%
               </span>
             </Link>
           );
@@ -351,12 +208,115 @@ function DashboardSkeleton() {
 
 export default function Dashboard() {
   const { data, isLoading, error, refetch } = useExecutiveSummary({});
+  const summary = data?.data;
+  const kpis = summary?.kpis;
+  const funnel = summary?.funnel;
+  const topDeals = summary?.top_deals;
+  const revenueForecast = summary?.revenue_forecast;
+  const pipelineVelocity = summary?.pipeline_velocity;
+  const atRiskDeals = (summary as Record<string, unknown> | undefined)?.at_risk_deals as TopDeal[] | undefined;
+
+  const funnelChartStages = useMemo(
+    () => {
+      const stages = Array.isArray(funnel?.stages) ? funnel.stages : [];
+      return stages.map((s, index) => {
+        const stage = s as Record<string, unknown>;
+        return {
+          name: String(stage.name ?? stage.stage_name ?? `Stage ${index + 1}`),
+          count: Number(stage.count ?? 0),
+          conversionRate: Number(stage.conversion_rate ?? stage.conversionRate ?? 0),
+        };
+      });
+    },
+    [funnel],
+  );
+
+  const velocityData = useMemo(
+    () => {
+      const source = Array.isArray(pipelineVelocity)
+        ? pipelineVelocity
+        : Array.isArray((pipelineVelocity as { data?: unknown[] } | undefined)?.data)
+          ? (pipelineVelocity as { data: unknown[] }).data
+          : [];
+
+      return source.map((row, index) => {
+        const point = row as Record<string, unknown>;
+        const avgDays = Number(point.avg_days_in_stage ?? 0);
+        return {
+          week: String(point.week ?? point.stage ?? `Point ${index + 1}`),
+          avgDaysInStage: avgDays,
+          throughput: Number(point.throughput ?? point.deal_count ?? 0),
+          rollingMeanDays: Number(point.rolling_mean_days ?? avgDays),
+          upperControlLimit: Number(point.upper_control_limit ?? avgDays),
+          lowerControlLimit: Number(point.lower_control_limit ?? avgDays),
+        };
+      });
+    },
+    [pipelineVelocity],
+  );
+
+  const revenueForecastSeries = useMemo(() => {
+    if (!revenueForecast) {
+      return { historical: [], forecast: [] };
+    }
+
+    if (Array.isArray(revenueForecast)) {
+      const forecast = revenueForecast.map((row, index) => {
+        const point = row as Record<string, unknown>;
+        const p50 = Number(point.forecast_value ?? point.p50 ?? 0);
+        return {
+          date: String(point.period ?? point.date ?? `T+${index + 1}`),
+          p10: Number(point.lower_bound ?? point.p10 ?? p50),
+          p50,
+          p90: Number(point.upper_bound ?? point.p90 ?? p50),
+        };
+      });
+      return { historical: [], forecast };
+    }
+
+    const payload = revenueForecast as Record<string, unknown>;
+    const historical = Array.isArray(payload.historical)
+      ? payload.historical.map((row, index) => {
+          const point = row as Record<string, unknown>;
+          return {
+            date: String(point.date ?? `H${index + 1}`),
+            revenue: Number(point.revenue ?? 0),
+          };
+        })
+      : [];
+
+    const forecast = Array.isArray(payload.forecast)
+      ? payload.forecast.map((row, index) => {
+          const point = row as Record<string, unknown>;
+          const p50 = Number(point.p50 ?? point.forecast_value ?? 0);
+          return {
+            date: String(point.date ?? point.period ?? `F${index + 1}`),
+            p10: Number(point.p10 ?? point.lower_bound ?? p50),
+            p50,
+            p90: Number(point.p90 ?? point.upper_bound ?? p50),
+          };
+        })
+      : [];
+
+    return { historical, forecast };
+  }, [revenueForecast]);
+
+  const dealBubbles = useMemo(
+    () =>
+      (topDeals ?? []).map((d, i) => ({
+        id: d.id ?? String(i),
+        name: d.prospect_name ?? d.name ?? d.account ?? "Unknown",
+        value: d.value_inr ?? d.value ?? 0,
+        riskScore: d.risk_score ?? RISK_LEVEL_SCORE[d.risk_level ?? "medium"] ?? 50,
+        daysInStage: d.days_in_stage,
+        stage: d.stage,
+      })),
+    [topDeals],
+  );
 
   if (isLoading) return <DashboardSkeleton />;
   if (error) return <DashboardError error={error as Error} refetch={refetch} />;
-
-  const summary = data?.data;
-  if (!summary) {
+  if (!summary || !kpis) {
     return (
       <DashboardError
         error={new Error("No dashboard data returned from API")}
@@ -364,13 +324,6 @@ export default function Dashboard() {
       />
     );
   }
-
-  const { kpis, funnel, risk_heatmap, top_deals } = summary;
-  const atRiskDeals = (summary as Record<string, unknown>).at_risk_deals as TopDeal[] | undefined;
-
-  const funnelStages = (funnel as Record<string, unknown>)?.stages as FunnelStage[] | undefined;
-  const overallConversion = (funnel as Record<string, unknown>)?.overall_conversion as number | undefined;
-  const heatmapCells = (risk_heatmap as Record<string, unknown>)?.cells as HeatmapCell[] | undefined;
 
   return (
     <ErrorBoundary>
@@ -387,39 +340,58 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="card p-6">
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-secondary">
-              Revenue Trend
+              Revenue Forecast
             </h3>
-            <div className="h-64">
-              <RevenueSparkline kpis={kpis} />
-            </div>
+            {revenueForecastSeries.historical.length > 0 || revenueForecastSeries.forecast.length > 0 ? (
+              <RevenueForecast
+                historical={revenueForecastSeries.historical}
+                forecast={revenueForecastSeries.forecast}
+              />
+            ) : (
+              <p className="text-sm text-text-tertiary">No revenue data available</p>
+            )}
           </div>
 
           <div className="card p-6">
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-secondary">
               Pipeline Funnel
             </h3>
-            {funnelStages?.length ? (
-              <PipelineFunnel
-                stages={funnelStages}
-                overallConversion={overallConversion}
-              />
+            {funnelChartStages.length ? (
+              <FunnelWaterfall stages={funnelChartStages} />
             ) : (
               <p className="text-sm text-text-tertiary">No funnel data available</p>
             )}
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="card p-6">
             <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-secondary">
-              Risk Heatmap
+              Pipeline Velocity
             </h3>
-            <RiskHeatmap cells={heatmapCells ?? []} />
+            {velocityData.length ? (
+              <PipelineVelocity data={velocityData} />
+            ) : (
+              <p className="text-sm text-text-tertiary">No velocity data available</p>
+            )}
           </div>
 
           <div className="card p-6">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wider text-text-secondary">
+              Deal Risk Map
+            </h3>
+            {dealBubbles.length ? (
+              <DealRiskScatter deals={dealBubbles} />
+            ) : (
+              <p className="text-sm text-text-tertiary">No deal risk data available</p>
+            )}
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div className="card p-6">
             <TopDealsTable
-              deals={(top_deals as unknown as TopDeal[]) ?? []}
+              deals={(topDeals as unknown as TopDeal[]) ?? []}
               title="Top Deals"
             />
           </div>

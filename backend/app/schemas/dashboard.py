@@ -104,8 +104,8 @@ class ExecutiveSummary(BaseModel):
     """Combined executive dashboard payload."""
 
     kpis: ExecutiveKPIs
-    revenue_forecast: list[RevenueForecast]
-    pipeline_velocity: list[PipelineVelocityData]
+    revenue_forecast: dict | list = []
+    pipeline_velocity: list[dict] | list = []
     funnel: FunnelData
     risk_heatmap: RiskHeatmapData
     top_deals: list[DealSummary]

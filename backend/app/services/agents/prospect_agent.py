@@ -238,16 +238,45 @@ class ProspectAgent(BaseAgent):
     # ── Data source stubs (replaced by real connectors in production) ────
 
     async def _fetch_mca_data(self, company_name: str) -> dict[str, Any] | None:
-        logger.debug("prospect_agent.fetching_mca", company=company_name)
-        return None
+        try:
+            from app.connectors.government.mca import MCAConnector
+
+            connector = MCAConnector()
+            return await connector.search_company(company_name)
+        except Exception as exc:
+            logger.warning(
+                "prospect_agent.mca_fetch_failed",
+                company=company_name,
+                error=str(exc),
+            )
+            return None
 
     async def _fetch_gst_data(self, company_name: str) -> dict[str, Any] | None:
-        logger.debug("prospect_agent.fetching_gst", company=company_name)
+        logger.warning(
+            "prospect_agent.gst_stub_unconnected",
+            company=company_name,
+            hint="No GST connector available yet; wire one when the API is accessible",
+        )
         return None
 
     async def _fetch_market_data(self, company_name: str) -> dict[str, Any] | None:
-        logger.debug("prospect_agent.fetching_market", company=company_name)
-        return None
+        try:
+            from app.connectors.market.bse import BSEConnector
+
+            connector = BSEConnector()
+            logger.warning(
+                "prospect_agent.market_data_limited",
+                company=company_name,
+                hint="BSE connector requires a scrip code, not a company name; returning None",
+            )
+            return None
+        except Exception as exc:
+            logger.warning(
+                "prospect_agent.market_fetch_failed",
+                company=company_name,
+                error=str(exc),
+            )
+            return None
 
     @staticmethod
     def _build_prospect_data(

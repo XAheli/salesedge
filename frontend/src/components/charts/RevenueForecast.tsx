@@ -24,8 +24,8 @@ export interface ForecastPoint {
 }
 
 interface RevenueForecastProps {
-  historical: HistoricalPoint[];
-  forecast: ForecastPoint[];
+  historical?: HistoricalPoint[];
+  forecast?: ForecastPoint[];
   className?: string;
 }
 
@@ -34,12 +34,15 @@ function toCrores(v: number): string {
 }
 
 export const RevenueForecast = memo(function RevenueForecast({
-  historical,
-  forecast,
+  historical = [],
+  forecast = [],
   className = "",
 }: RevenueForecastProps) {
+  const historicalData = historical ?? [];
+  const forecastData = forecast ?? [];
+
   const data = useMemo(() => {
-    const hist = historical.map((h) => ({
+    const hist = historicalData.map((h) => ({
       date: h.date,
       actual: h.revenue,
       p10: null as number | null,
@@ -47,17 +50,17 @@ export const RevenueForecast = memo(function RevenueForecast({
       p90: null as number | null,
     }));
 
-    const bridgePoint = historical.length > 0
+    const bridgePoint = historicalData.length > 0
       ? {
-          date: historical[historical.length - 1]!.date,
-          actual: historical[historical.length - 1]!.revenue,
-          p10: historical[historical.length - 1]!.revenue,
-          p50: historical[historical.length - 1]!.revenue,
-          p90: historical[historical.length - 1]!.revenue,
+          date: historicalData[historicalData.length - 1]!.date,
+          actual: historicalData[historicalData.length - 1]!.revenue,
+          p10: historicalData[historicalData.length - 1]!.revenue,
+          p50: historicalData[historicalData.length - 1]!.revenue,
+          p90: historicalData[historicalData.length - 1]!.revenue,
         }
       : null;
 
-    const fore = forecast.map((f) => ({
+    const fore = forecastData.map((f) => ({
       date: f.date,
       actual: null as number | null,
       p10: f.p10,
@@ -66,7 +69,7 @@ export const RevenueForecast = memo(function RevenueForecast({
     }));
 
     return bridgePoint ? [...hist, bridgePoint, ...fore] : [...hist, ...fore];
-  }, [historical, forecast]);
+  }, [historicalData, forecastData]);
 
   return (
     <div className={className}>
@@ -178,6 +181,20 @@ export const RevenueForecast = memo(function RevenueForecast({
           <span className="inline-block h-3 w-4 rounded-sm bg-primary-500/10" /> P10–P90 Range
         </span>
       </div>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {historicalData.length > 0 && (
+            <p>Historical: {historicalData.map((h) => `${h.date}: ${toCrores(h.revenue)}`).join(", ")}.</p>
+          )}
+          {forecastData.length > 0 && (
+            <p className="mt-1">
+              Forecast: {forecastData.map((f) => `${f.date}: P10 ${toCrores(f.p10)}, P50 ${toCrores(f.p50)}, P90 ${toCrores(f.p90)}`).join("; ")}.
+            </p>
+          )}
+        </div>
+      </details>
     </div>
   );
 });

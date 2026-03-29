@@ -12,6 +12,8 @@ from app.api.v1.prospects import router as prospects_router
 from app.api.v1.signals import router as signals_router
 from app.api.v1.retention import router as retention_router
 from app.api.v1.competitive import router as competitive_router
+from app.api.v1.search import router as search_router
+from app.api.v1.admin import router as admin_router
 
 v1_router = APIRouter()
 
@@ -25,3 +27,5 @@ v1_router.include_router(agents_router)
 v1_router.include_router(signals_router, prefix="/signals", tags=["signals"])
 v1_router.include_router(retention_router, prefix="/retention", tags=["retention"])
 v1_router.include_router(competitive_router, prefix="/competitive", tags=["competitive"])
+v1_router.include_router(search_router, prefix="/search", tags=["search"])
+v1_router.include_router(admin_router, prefix="/admin", tags=["admin"])

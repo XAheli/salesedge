@@ -1,0 +1,181 @@
+{
+  "info": {
+    "name": "SalesEdge API",
+    "description": "Key endpoints for the SalesEdge platform. Set the `base_url` variable to your server address and `auth_token` to a valid JWT.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://localhost:8000" },
+    { "key": "auth_token", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{auth_token}}" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/auth/register",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"test@example.com\", \"password\": \"TestPass123!\", \"full_name\": \"Test User\"}"
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/auth/login",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\": \"test@example.com\", \"password\": \"TestPass123!\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Dashboard",
+      "item": [
+        {
+          "name": "Get KPIs",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/dashboard/kpis"
+          }
+        },
+        {
+          "name": "Get Pipeline Funnel",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/dashboard/pipeline"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Prospects",
+      "item": [
+        {
+          "name": "List Prospects",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/api/v1/prospects?page=1&per_page=20",
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "per_page", "value": "20" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Prospect Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/prospects/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Deals",
+      "item": [
+        {
+          "name": "List Deals",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/deals"
+          }
+        },
+        {
+          "name": "Get Deal Detail",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/deals/1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Retention",
+      "item": [
+        {
+          "name": "Get Retention Overview",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/retention/overview"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Intelligence",
+      "item": [
+        {
+          "name": "Get Signals",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/signals"
+          }
+        },
+        {
+          "name": "Get Competitive Intel",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/competitive/overview"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agents",
+      "item": [
+        {
+          "name": "Chat with Agent",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/api/v1/agents/chat",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"message\": \"Analyze Reliance Industries as a prospect\", \"agent\": \"prospect\"}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Data Provenance",
+      "item": [
+        {
+          "name": "Get Source Status",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/data-provenance/sources"
+          }
+        }
+      ]
+    },
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/api/v1/health"
+          }
+        }
+      ]
+    }
+  ]
+}

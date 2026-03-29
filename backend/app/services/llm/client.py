@@ -1,12 +1,11 @@
-"""LLM client that works with OpenRouter, OpenAI, or any OpenAI-compatible API.
+"""LLM client that works with OpenRouter, OpenAI, Groq, Ollama, or any OpenAI-compatible API.
 
-Usage:
-    # Set SE_LLM_API_KEY in .env, then:
-    client = LLMClient()
-    response = await client.complete("Analyze this deal risk...")
-
-    # Or with structured output:
-    result = await client.complete_json("Extract key entities from: ...", schema=MySchema)
+Supported providers (set SE_LLM_PROVIDER in .env):
+  - openrouter: https://openrouter.ai (free models available)
+  - openai:     https://api.openai.com/v1
+  - groq:       https://api.groq.com/openai/v1 (fast inference, free tier)
+  - ollama:     http://localhost:11434/v1 (local, no API key)
+  - Any OpenAI-compatible endpoint via SE_LLM_BASE_URL
 """
 
 from __future__ import annotations
@@ -28,16 +27,25 @@ T = TypeVar("T", bound=BaseModel)
 class LLMClient:
     """Universal LLM client compatible with OpenRouter, OpenAI, Ollama, etc."""
 
+    PROVIDER_DEFAULTS: dict[str, str] = {
+        "openrouter": "https://openrouter.ai/api/v1",
+        "openai": "https://api.openai.com/v1",
+        "groq": "https://api.groq.com/openai/v1",
+        "ollama": "http://localhost:11434/v1",
+    }
+
     def __init__(self, model_override: str | None = None):
         settings = get_settings()
         self.api_key = settings.llm_api_key
+        self.provider = settings.llm_provider
         self.base_url = settings.llm_base_url.rstrip("/")
+        if self.base_url == "https://openrouter.ai/api/v1" and self.provider in self.PROVIDER_DEFAULTS:
+            self.base_url = self.PROVIDER_DEFAULTS[self.provider]
         self.model = model_override or settings.llm_model
         self.fallback_model = settings.llm_fallback_model
         self.max_tokens = settings.llm_max_tokens
         self.temperature = settings.llm_temperature
         self.timeout = settings.llm_timeout_seconds
-        self.provider = settings.llm_provider
 
         self._headers: dict[str, str] = {
             "Content-Type": "application/json",
@@ -123,7 +131,7 @@ class LLMClient:
             )
             return self._fallback_response(prompt)
         except Exception as e:
-            logger.error("llm.error", error=str(e), type=type(e).__name__, api_key_prefix=self.api_key[:10] if self.api_key else "NONE", base_url=self.base_url)
+            logger.error("llm.error", error=str(e), type=type(e).__name__, api_key_set=bool(self.api_key), base_url=self.base_url)
             return self._fallback_response(prompt)
 
     async def complete_json(
@@ -165,10 +173,11 @@ class LLMClient:
         return (
             "[LLM not configured] To enable AI-powered analysis, set SE_LLM_API_KEY "
             "in your .env file. Supported providers:\n"
-            "- OpenRouter (recommended): Get a free key at https://openrouter.ai/keys\n"
-            "- OpenAI: Set SE_LLM_PROVIDER=openai and SE_LLM_BASE_URL=https://api.openai.com/v1\n"
-            "- Ollama (local): Set SE_LLM_PROVIDER=ollama and SE_LLM_BASE_URL=http://localhost:11434/v1\n"
-            "- Any OpenAI-compatible API: Set SE_LLM_BASE_URL to your endpoint"
+            "- OpenRouter: SE_LLM_PROVIDER=openrouter (free models, https://openrouter.ai/keys)\n"
+            "- Groq: SE_LLM_PROVIDER=groq (fast & free tier, https://console.groq.com/keys)\n"
+            "- OpenAI: SE_LLM_PROVIDER=openai (https://platform.openai.com/api-keys)\n"
+            "- Ollama: SE_LLM_PROVIDER=ollama (local, no key needed)\n"
+            "- Any OpenAI-compatible API: set SE_LLM_BASE_URL to your endpoint"
         )
 
 

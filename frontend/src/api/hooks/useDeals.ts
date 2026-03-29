@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { get, getPaginated } from "../client";
 import type { DealDetail, DealFilterParams } from "@/types/api";
+import { classifyRisk } from "@/utils/risk-bands";
 
 export interface DealItem {
   id: string;
@@ -20,14 +21,7 @@ export interface DealRiskSummary {
   high_deal_ids: string[];
 }
 
-export function computeRiskLevel(
-  riskScore: number,
-): "critical" | "high" | "medium" | "low" {
-  if (riskScore >= 0.7) return "critical";
-  if (riskScore >= 0.5) return "high";
-  if (riskScore >= 0.3) return "medium";
-  return "low";
-}
+export const computeRiskLevel = classifyRisk;
 
 export function useDealList(filters: DealFilterParams = {}) {
   const {

@@ -88,8 +88,12 @@ class QualityScorer:
             try:
                 if rule(value):
                     passed += 1
-            except Exception:
-                pass
+            except Exception as exc:
+                logger.warning(
+                    "quality_scorer.rule_error",
+                    rule=field_name,
+                    error=str(exc),
+                )
 
         return passed / len(validation_rules)
 

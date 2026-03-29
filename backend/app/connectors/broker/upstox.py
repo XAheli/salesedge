@@ -12,13 +12,13 @@ logger = structlog.get_logger(__name__)
 
 
 class UpstoxConnector(BaseConnector):
-    """Upstox API connector — **stub, not yet fully implemented**.
+    """Upstox API connector.
 
     Authentication uses OAuth 2.0.  An ``access_token`` is required and
     must be refreshed via the Upstox login flow.
     """
 
-    _IMPLEMENTED = False
+    _IMPLEMENTED = True
 
     def __init__(
         self,
@@ -45,24 +45,65 @@ class UpstoxConnector(BaseConnector):
         headers.setdefault("Accept", "application/json")
 
     async def get_quote(self, symbol: str) -> dict[str, Any]:
-        raise NotImplementedError("Upstox connector is not yet implemented")
+        try:
+            return await self._request(
+                "GET",
+                "/market-quote/quotes",
+                params={"instrument_key": symbol},
+                cache_key=f"upstox:quote:{symbol}",
+                cache_ttl=10,
+            )
+        except Exception as exc:
+            logger.error("upstox.get_quote_failed", error=str(exc))
+            raise
 
     async def get_historical_data(
         self, instrument_key: str, interval: str, from_date: str, to_date: str
     ) -> dict[str, Any]:
-        raise NotImplementedError("Upstox connector is not yet implemented")
+        try:
+            return await self._request(
+                "GET",
+                f"/historical-candle/{instrument_key}/{interval}/{to_date}/{from_date}",
+                cache_key=f"upstox:hist:{instrument_key}:{interval}:{from_date}:{to_date}",
+                cache_ttl=300,
+            )
+        except Exception as exc:
+            logger.error("upstox.get_historical_data_failed", error=str(exc))
+            raise
 
     async def get_market_status(self) -> dict[str, Any]:
-        raise NotImplementedError("Upstox connector is not yet implemented")
+        try:
+            return await self._request(
+                "GET",
+                "/market/status/exchange",
+                cache_key="upstox:market_status",
+                cache_ttl=60,
+            )
+        except Exception as exc:
+            logger.error("upstox.get_market_status_failed", error=str(exc))
+            raise
 
     async def health_check(self) -> ConnectorHealth:
-        return ConnectorHealth(
-            status="degraded",
-            last_check=datetime.now(timezone.utc),
-            response_time_ms=0.0,
-            error_rate=0.0,
-            details={"reason": "stub — not yet implemented"},
-        )
+        start = time.monotonic()
+        try:
+            await self._request("GET", "/market/status/exchange")
+            elapsed = (time.monotonic() - start) * 1000
+            return ConnectorHealth(
+                status="healthy",
+                last_check=datetime.now(timezone.utc),
+                response_time_ms=elapsed,
+                error_rate=self.error_rate,
+                details={"endpoint": "/market/status/exchange"},
+            )
+        except Exception as exc:
+            elapsed = (time.monotonic() - start) * 1000
+            return ConnectorHealth(
+                status="unhealthy",
+                last_check=datetime.now(timezone.utc),
+                response_time_ms=elapsed,
+                error_rate=self.error_rate,
+                details={"error": str(exc)},
+            )
 
     def get_business_use_cases(self) -> list[str]:
         return ["deal_intelligence", "prospect_research"]

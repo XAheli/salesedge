@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "@/stores/useAppStore";
+import { post } from "@/api/client";
 import { ArrowRight, UserPlus, LogIn } from "lucide-react";
 
 export default function Login() {
@@ -21,14 +22,11 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role, organization: org }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Registration failed");
-      const { token, user } = data.data;
+      const result = await post<{ token: string; user: { name: string; email: string; role: string; initials: string } }>(
+        "/v1/auth/register",
+        { name, email, password, role, organization: org },
+      );
+      const { token, user } = result.data;
       localStorage.setItem("salesedge-token", token);
       register({
         name: user.name,
@@ -50,14 +48,11 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch("/api/v1/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || "Login failed");
-      const { token, user } = data.data;
+      const result = await post<{ token: string; user: { name: string; email: string; role: string; initials: string } }>(
+        "/v1/auth/login",
+        { email, password },
+      );
+      const { token, user } = result.data;
       localStorage.setItem("salesedge-token", token);
       login({
         name: user.name,

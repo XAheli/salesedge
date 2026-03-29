@@ -1,0 +1,7 @@
+{
+  "version": "1.0.0",
+  "generated_by": "scripts/build-connector-matrix.py",
+  "note": "This file is auto-generated. Run: python scripts/build-connector-matrix.py",
+  "total_connectors": 0,
+  "connectors": []
+}

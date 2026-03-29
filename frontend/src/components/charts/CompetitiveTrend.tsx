@@ -104,6 +104,17 @@ export const CompetitiveTrend = memo(function CompetitiveTrend({
           </span>
         ))}
       </div>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {data.map((d, i) => (
+            <p key={i}>
+              {d.date}: {competitors.map((c) => `${c}=${d[c] ?? "–"}`).join(", ")}
+            </p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

@@ -141,7 +141,7 @@ jobs:
       - name: Pytest with coverage
         working-directory: backend
         run: |
-          uv pip install --system -r requirements.txt pytest pytest-asyncio pytest-cov
+          uv pip install --system -r requirements.txt pytest pytest-asyncio pytest-cov aiosqlite
           pytest --cov=app --cov-report=xml --cov-report=term-missing -q
 
       - name: Upload backend coverage
@@ -172,6 +172,10 @@ jobs:
         run: |
           npm ci 2>/dev/null || npm install
           npm run test:coverage
+
+      - name: Install Playwright browsers
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
 
       - name: Upload frontend coverage
         uses: codecov/codecov-action@v4

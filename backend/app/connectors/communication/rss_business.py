@@ -36,7 +36,7 @@ class RSSBusinessConnector(BaseConnector):
     def __init__(self, cache_manager: Any | None = None) -> None:
         super().__init__(
             name="rss_business",
-            base_url="https://rss.placeholder",
+            base_url="https://rss.app",
             tier=ConnectorTier.TIER3_ENRICHMENT,
             cache_manager=cache_manager,
             timeout=20.0,

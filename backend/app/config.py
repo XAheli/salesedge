@@ -26,6 +26,16 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://localhost:5432/salesedge"
     redis_url: str = "redis://localhost:6379/0"
 
+    @property
+    def async_database_url(self) -> str:
+        """Ensure the database URL uses asyncpg driver (Render provides plain postgresql://)."""
+        url = self.database_url
+        if url.startswith("postgres://"):
+            url = "postgresql://" + url[len("postgres://"):]
+        if url.startswith("postgresql://") and "+asyncpg" not in url:
+            url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return url
+
     # ─── Government APIs (Tier 1) ───────────────────────────────
     ogd_api_key: str = ""
 
@@ -61,12 +71,12 @@ class Settings(BaseSettings):
     hubspot_api_key: str | None = None
 
     # ─── LLM / AI Provider ──────────────────────────────────────
-    # Supports OpenRouter, OpenAI, or any OpenAI-compatible API
-    llm_provider: str = "openrouter"  # "openrouter", "openai", "local", "ollama"
-    llm_api_key: str | None = None  # OpenRouter/OpenAI API key
-    llm_base_url: str = "https://openrouter.ai/api/v1"  # Override for custom endpoints
-    llm_model: str = "google/gemini-2.0-flash-001"  # Default model
-    llm_fallback_model: str = "meta-llama/llama-3.3-70b-instruct:free"  # Free fallback
+    # Supports: openrouter, openai, groq, ollama, or any OpenAI-compatible API
+    llm_provider: str = "openrouter"
+    llm_api_key: str | None = None
+    llm_base_url: str = "https://openrouter.ai/api/v1"
+    llm_model: str = "google/gemini-2.0-flash-001"
+    llm_fallback_model: str = "meta-llama/llama-3.3-70b-instruct:free"
     llm_max_tokens: int = 4096
     llm_temperature: float = 0.3  # Lower for business-critical outputs
     llm_timeout_seconds: int = 30
@@ -91,8 +101,13 @@ class Settings(BaseSettings):
         return [o.strip() for o in raw.split(",") if o.strip()]
 
 
-class FeatureFlags(BaseModel):
+class FeatureFlags(BaseSettings):
     """Feature flags for staged rollout of capabilities."""
+
+    model_config = SettingsConfigDict(
+        env_prefix="SE_FF_",
+        extra="ignore",
+    )
 
     enable_prospect_agent: bool = True
     enable_deal_risk_agent: bool = True
@@ -108,6 +123,21 @@ class FeatureFlags(BaseModel):
     enable_websocket_alerts: bool = True
     enable_dark_mode: bool = True
     enable_export_functionality: bool = True
+
+
+RISK_BANDS = {
+    "critical": {"min": 70, "color": "red"},
+    "high": {"min": 50, "color": "orange"},
+    "medium": {"min": 30, "color": "amber"},
+    "low": {"min": 0, "color": "green"},
+}
+
+
+def classify_risk(score: float) -> str:
+    for band in ("critical", "high", "medium", "low"):
+        if score >= RISK_BANDS[band]["min"]:
+            return band
+    return "low"
 
 
 @lru_cache

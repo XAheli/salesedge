@@ -185,8 +185,8 @@ class DataNormalizer:
             if date_field in normalised and isinstance(normalised[date_field], str):
                 try:
                     normalised[date_field] = self.normalize_date(normalised[date_field])
-                except ValueError:
-                    pass
+                except Exception as e:
+                    logger.warning("normalization.date_parse_failed", field=date_field, value=normalised[date_field], error=str(e))
 
         for amount_field in ("revenue_inr", "deal_value_inr", "funding_amount_inr"):
             val = normalised.get(amount_field)
@@ -194,7 +194,7 @@ class DataNormalizer:
             if val is not None:
                 try:
                     normalised[amount_field] = self.normalize_amount_inr(val, unit)
-                except (ValueError, TypeError):
-                    pass
+                except (ValueError, TypeError) as e:
+                    logger.warning("normalization.amount_parse_failed", field=amount_field, value=val, error=str(e))
 
         return normalised

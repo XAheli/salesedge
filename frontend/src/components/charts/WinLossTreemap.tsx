@@ -82,6 +82,14 @@ export const WinLossTreemap = memo(function WinLossTreemap({
           <span className="inline-block h-2.5 w-2.5 rounded bg-risk" /> Losses
         </span>
       </div>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          <p>Wins: {data.filter((d) => d.outcome === "win").map((d) => `${d.reason} (${d.count})`).join(", ")}.</p>
+          <p>Losses: {data.filter((d) => d.outcome === "loss").map((d) => `${d.reason} (${d.count})`).join(", ")}.</p>
+        </div>
+      </details>
     </div>
   );
 });

@@ -37,7 +37,8 @@ export const AttributionSankey = memo(function AttributionSankey({
   };
 
   return (
-    <div className={`h-[400px] ${className}`}>
+    <div className={`${className}`}>
+      <div className="h-[400px]">
       <ResponsiveSankey
         data={data}
         margin={{ top: 16, right: 120, bottom: 16, left: 120 }}
@@ -77,6 +78,19 @@ export const AttributionSankey = memo(function AttributionSankey({
           </div>
         )}
       />
+      </div>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          <p>Nodes: {nodes.map((n) => n.label ?? n.id).join(", ")}.</p>
+          {links.map((l, i) => (
+            <p key={i}>
+              {l.source} → {l.target}: {l.value.toLocaleString("en-IN")}
+            </p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

@@ -111,6 +111,18 @@ export const FeatureWaterfall = memo(function FeatureWaterfall({
           <span className="inline-block h-px w-4 border-t border-dashed border-text-tertiary" /> Base
         </span>
       </div>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          <p>Base value: {baseValue.toFixed(2)}, Final score: {finalScore.toFixed(2)}</p>
+          {features.map((f) => (
+            <p key={f.feature}>
+              {f.feature}: {f.contribution >= 0 ? "+" : ""}{f.contribution.toFixed(3)}
+            </p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

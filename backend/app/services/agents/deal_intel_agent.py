@@ -159,7 +159,7 @@ class DealIntelAgent(BaseAgent):
             "risk_score": result.risk_score,
             "confidence": result.confidence,
             "components": [
-                {"name": c.name, "health": c.health_value, "weight": c.weight}
+                {"name": c.name, "health": c.raw_value, "weight": c.weight}
                 for c in result.components
             ],
             "explanation": result.explanation,

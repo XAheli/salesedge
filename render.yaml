@@ -1,0 +1,46 @@
+databases:
+  - name: salesedge-db
+    plan: free
+    databaseName: salesedge
+    user: salesedge
+
+services:
+  - type: redis
+    name: salesedge-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+
+  - type: web
+    name: salesedge-api
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: SE_DATABASE_URL
+        fromDatabase:
+          name: salesedge-db
+          property: connectionString
+      - key: SE_REDIS_URL
+        fromService:
+          name: salesedge-redis
+          type: redis
+          property: connectionString
+      - key: SE_ENVIRONMENT
+        value: production
+      - key: SE_DEBUG
+        value: "false"
+      - key: SE_LOG_LEVEL
+        value: INFO
+      - key: SE_CORS_ORIGINS
+        sync: false
+      - key: SE_OGD_API_KEY
+        sync: false
+      - key: SE_LLM_API_KEY
+        sync: false
+      - key: SE_LLM_PROVIDER
+        sync: false
+      - key: SE_JWT_SECRET_KEY
+        generateValue: true
+    healthCheckPath: /api/v1/health

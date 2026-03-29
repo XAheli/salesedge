@@ -81,16 +81,16 @@ class TestDealRiskScorer:
 
     def test_components_present(self, scorer: DealRiskScorer):
         result = scorer.score(_healthy_deal())
-        assert len(result.components) == 7
+        assert len(result.components) == 8
         component_names = {c.name for c in result.components}
-        assert "engagement_momentum" in component_names
+        assert "engagement_decay" in component_names
         assert "stakeholder_coverage" in component_names
         assert "stage_velocity" in component_names
 
     def test_explanation_generated(self, scorer: DealRiskScorer):
         result = scorer.score(_at_risk_deal())
         assert "Risk score:" in result.explanation
-        assert "Weakest areas:" in result.explanation
+        assert "Top risk drivers:" in result.explanation
 
     def test_higher_confidence_with_more_data(self, scorer: DealRiskScorer):
         full = scorer.score(_healthy_deal())
@@ -175,21 +175,21 @@ class TestContractValueDrift:
             deal_id="UP", title="Upsell", value_inr=6e7, initial_value_inr=5e7,
         )
         result = scorer.score(deal)
-        drift_comp = next(c for c in result.components if c.name == "contract_value_drift")
-        assert drift_comp.health_value == 1.0
+        drift_comp = next(c for c in result.components if c.name == "value_drift")
+        assert drift_comp.raw_value == 1.0
 
     def test_value_decreased(self, scorer: DealRiskScorer):
         deal = DealData(
             deal_id="DOWN", title="Downsell", value_inr=3e7, initial_value_inr=5e7,
         )
         result = scorer.score(deal)
-        drift_comp = next(c for c in result.components if c.name == "contract_value_drift")
-        assert drift_comp.health_value < 1.0
+        drift_comp = next(c for c in result.components if c.name == "value_drift")
+        assert drift_comp.raw_value < 1.0
 
     def test_no_initial_value(self, scorer: DealRiskScorer):
         deal = DealData(
             deal_id="NOINIT", title="New", value_inr=5e7,
         )
         result = scorer.score(deal)
-        drift_comp = next(c for c in result.components if c.name == "contract_value_drift")
-        assert drift_comp.health_value == 0.5
+        drift_comp = next(c for c in result.components if c.name == "value_drift")
+        assert drift_comp.raw_value == 0.5

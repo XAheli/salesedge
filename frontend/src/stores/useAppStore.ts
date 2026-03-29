@@ -20,7 +20,9 @@ export interface UserProfile {
 
 export interface UserApiKeys {
   ogd: string;
-  openrouter: string;
+  llmKey: string;
+  llmProvider: "openrouter" | "groq" | "openai" | "ollama";
+  llmModel: string;
   finnhub: string;
   alphaVantage: string;
 }
@@ -86,7 +88,9 @@ export const useAppStore = create<AppState>()(
       },
       apiKeys: {
         ogd: "",
-        openrouter: "",
+        llmKey: "",
+        llmProvider: "openrouter",
+        llmModel: "",
         finnhub: "",
         alphaVantage: "",
       },

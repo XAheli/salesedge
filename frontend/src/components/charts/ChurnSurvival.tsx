@@ -134,6 +134,21 @@ export const ChurnSurvival = memo(function ChurnSurvival({
           )}
         </AreaChart>
       </ResponsiveContainer>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {medianSurvivalDays !== undefined && <p>Median survival: {medianSurvivalDays} days.</p>}
+          {data.map((d) => (
+            <p key={d.day}>
+              Day {d.day}: {(d.probability * 100).toFixed(1)}% survival
+              {d.lower !== undefined && d.upper !== undefined
+                ? ` (CI: ${(d.lower * 100).toFixed(1)}%–${(d.upper * 100).toFixed(1)}%)`
+                : ""}
+            </p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

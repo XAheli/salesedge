@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Generic, TypeVar
+from typing import Generic, Literal, TypeVar
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -15,7 +15,9 @@ class SourceAttribution(BaseModel):
     source_name: str
     source_url: str | None = None
     last_updated: datetime | None = None
-    reliability_tier: int = Field(ge=1, le=3, description="1=Gov/Official, 2=Market, 3=Enrichment")
+    reliability_tier: Literal["tier1", "tier2", "tier3"] = Field(
+        description="tier1=Gov/Official, tier2=Market, tier3=Enrichment"
+    )
 
 
 class ResponseMetadata(BaseModel):
@@ -28,7 +30,7 @@ class ResponseMetadata(BaseModel):
     )
     source_attribution: list[SourceAttribution] = Field(default_factory=list)
     confidence_score: float | None = Field(None, ge=0.0, le=1.0)
-    cache_status: str | None = Field(None, description="HIT, MISS, or STALE")
+    cache_status: Literal["hit", "miss", "stale"] | None = Field(None)
 
 
 class ErrorDetail(BaseModel):
@@ -45,7 +47,7 @@ class APIResponse(BaseModel, Generic[T]):
     success: bool = True
     data: T | None = None
     error: ErrorDetail | None = None
-    meta: ResponseMetadata = Field(default_factory=ResponseMetadata)
+    metadata: ResponseMetadata = Field(default_factory=ResponseMetadata)
 
 
 class PaginatedResponse(BaseModel, Generic[T]):
@@ -56,4 +58,4 @@ class PaginatedResponse(BaseModel, Generic[T]):
     page: int = 1
     page_size: int = 25
     pages: int = 1
-    meta: ResponseMetadata = Field(default_factory=ResponseMetadata)
+    metadata: ResponseMetadata = Field(default_factory=ResponseMetadata)

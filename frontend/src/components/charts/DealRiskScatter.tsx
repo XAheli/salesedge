@@ -11,6 +11,7 @@ import {
   Cell,
 } from "recharts";
 import { formatINR } from "@/utils/indian-formatting";
+import { classifyRisk } from "@/utils/risk-bands";
 
 export interface DealBubble {
   id: string;
@@ -28,10 +29,15 @@ interface DealRiskScatterProps {
   className?: string;
 }
 
+const RISK_BAND_COLORS: Record<string, string> = {
+  critical: "#DC2626",
+  high: "#D97706",
+  medium: "#D97706",
+  low: "#059669",
+};
+
 function getRiskColor(risk: number): string {
-  if (risk >= 0.7) return "#DC2626";
-  if (risk >= 0.4) return "#D97706";
-  return "#059669";
+  return RISK_BAND_COLORS[classifyRisk(risk)] ?? "#059669";
 }
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: DealBubble }> }) {
@@ -43,7 +49,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
       <p className="text-sm font-semibold text-text-primary">{deal.name}</p>
       <div className="mt-1.5 space-y-0.5 text-xs text-text-secondary">
         <p>Value: {formatINR(deal.value, { compact: true })}</p>
-        <p>Risk: {(deal.riskScore * 100).toFixed(0)}%</p>
+        <p>Risk: {deal.riskScore.toFixed(0)}%</p>
         <p>Days in Stage: {deal.daysInStage}</p>
         <p>Stage: {deal.stage}</p>
         {deal.riskFactors?.length ? (
@@ -92,11 +98,11 @@ export const DealRiskScatter = memo(function DealRiskScatter({
             dataKey="riskScore"
             type="number"
             name="Risk Score"
-            domain={[0, 1]}
+            domain={[0, 100]}
             tick={{ fontSize: 11, fill: "#57534E" }}
             axisLine={false}
             tickLine={false}
-            tickFormatter={(v: number) => `${(v * 100).toFixed(0)}%`}
+            tickFormatter={(v: number) => `${v.toFixed(0)}%`}
             label={{
               value: "Risk Score",
               angle: -90,
@@ -142,6 +148,18 @@ export const DealRiskScatter = memo(function DealRiskScatter({
         </span>
         <span className="text-text-tertiary">Bubble size = days in stage</span>
       </div>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {deals.map((d) => (
+            <p key={d.id}>
+              {d.name}: {valueCr(d.value)}, risk {d.riskScore.toFixed(0)}%, {d.daysInStage}d in {d.stage}
+              {d.riskFactors?.length ? ` — ${d.riskFactors.join(", ")}` : ""}
+            </p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

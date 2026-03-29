@@ -110,7 +110,13 @@ class DeduplicationStore:
 
     def _count_redis(self) -> int:
         try:
-            keys = self._redis.keys(f"{self._prefix}*")
-            return len(keys)
+            count = 0
+            cursor = 0
+            while True:
+                cursor, keys = self._redis.scan(cursor, match=f"{self._prefix}*", count=100)
+                count += len(keys)
+                if cursor == 0:
+                    break
+            return count
         except Exception:
             return len(self._memory_store)

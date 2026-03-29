@@ -7,6 +7,7 @@ from collections import Counter
 from fastapi import APIRouter, Query
 from sqlmodel import select, func, col
 
+from app.config import classify_risk
 from app.dependencies import DBSession
 from app.models.deal import Deal
 from app.models.prospect import Prospect
@@ -27,6 +28,40 @@ from app.utils.indian_formats import format_inr
 router = APIRouter()
 
 STAGE_ORDER = ["Lead", "MQL", "SQL", "Discovery", "Proposal", "Negotiation", "Won", "Lost"]
+
+
+def _compute_trend(current: float, previous: float) -> tuple[float, str]:
+    """Return (trend_pct, direction) comparing two period values."""
+    if previous == 0:
+        return (100.0, "up") if current > 0 else (0.0, "flat")
+    pct = round((current - previous) / previous * 100, 1)
+    direction = "up" if pct > 0 else "down" if pct < 0 else "flat"
+    return pct, direction
+
+
+def _data_confidence(deals: list) -> float:
+    """Fraction of deals with non-null risk_score, engagement_score, win_probability."""
+    if not deals:
+        return 0.0
+    filled = sum(
+        (d.risk_score is not None) + (d.engagement_score is not None) + (d.win_probability is not None)
+        for d in deals
+    )
+    return round(filled / (len(deals) * 3), 2)
+
+
+def _weekly_values(deals: list, weeks: int = 6) -> list[float]:
+    """Sum deal values into weekly buckets (oldest first)."""
+    now = datetime.utcnow()
+    buckets = [0.0] * weeks
+    for d in deals:
+        dt = d.created_at
+        if not dt:
+            continue
+        week_ago = (now - dt).days // 7
+        if 0 <= week_ago < weeks:
+            buckets[weeks - 1 - week_ago] += d.value_inr
+    return buckets
 
 
 @router.get("/executive-summary", response_model=APIResponse[ExecutiveSummary])
@@ -50,40 +85,81 @@ async def executive_summary(
     win_rate = (len(won_deals) / total_closed * 100) if total_closed > 0 else 0
     avg_days = sum(d.days_in_stage for d in active_deals) / len(active_deals) if active_deals else 0
 
-    arr_val = total_won_value * 1
+    now = datetime.utcnow()
+    period_days = int(time_window.rstrip("d")) if time_window.endswith("d") else 30
+    cur_start = now - timedelta(days=period_days)
+    prev_start = cur_start - timedelta(days=period_days)
+
+    cur_won = [d for d in won_deals if d.created_at and d.created_at >= cur_start]
+    prev_won = [d for d in won_deals if d.created_at and prev_start <= d.created_at < cur_start]
+    cur_won_val = sum(d.value_inr for d in cur_won)
+    prev_won_val = sum(d.value_inr for d in prev_won)
+
+    cur_pipe = [d for d in active_deals if d.created_at and d.created_at >= cur_start]
+    prev_pipe = [d for d in active_deals if d.created_at and prev_start <= d.created_at < cur_start]
+    cur_pipe_val = sum(d.value_inr for d in cur_pipe)
+    prev_pipe_val = sum(d.value_inr for d in prev_pipe)
+
+    cur_closed = [d for d in all_deals if d.stage in ("Won", "Lost") and d.created_at and d.created_at >= cur_start]
+    prev_closed = [d for d in all_deals if d.stage in ("Won", "Lost") and d.created_at and prev_start <= d.created_at < cur_start]
+    cur_wr = sum(1 for d in cur_closed if d.stage == "Won") / max(1, len(cur_closed)) * 100
+    prev_wr = sum(1 for d in prev_closed if d.stage == "Won") / max(1, len(prev_closed)) * 100
+
+    cur_active = [d for d in active_deals if d.created_at and d.created_at >= cur_start]
+    prev_active = [d for d in active_deals if d.created_at and prev_start <= d.created_at < cur_start]
+    cur_avg_days = sum(d.days_in_stage for d in cur_active) / max(1, len(cur_active))
+    prev_avg_days = sum(d.days_in_stage for d in prev_active) / max(1, len(prev_active))
+
+    won_value = sum(d.value_inr for d in won_deals)
+    lost_value = sum(d.value_inr for d in lost_deals)
+    active_value = total_pipeline
+    nrr = round((won_value + active_value) / max(1, won_value + lost_value) * 100, 1)
+
+    cur_lost_val = sum(d.value_inr for d in lost_deals if d.created_at and d.created_at >= cur_start)
+    prev_lost_val = sum(d.value_inr for d in lost_deals if d.created_at and prev_start <= d.created_at < cur_start)
+    cur_nrr = (cur_won_val + cur_pipe_val) / max(1, cur_won_val + cur_lost_val) * 100
+    prev_nrr = (prev_won_val + prev_pipe_val) / max(1, prev_won_val + prev_lost_val) * 100
+
+    confidence = _data_confidence(all_deals)
+    arr_val = total_won_value
     mrr_val = arr_val / 12
+    arr_trend, arr_dir = _compute_trend(cur_won_val, prev_won_val)
+    pipe_trend, pipe_dir = _compute_trend(cur_pipe_val, prev_pipe_val)
+    wr_trend, wr_dir = _compute_trend(cur_wr, prev_wr)
+    cycle_trend, cycle_dir = _compute_trend(cur_avg_days, prev_avg_days)
+    nrr_trend, nrr_dir = _compute_trend(cur_nrr, prev_nrr)
 
     kpis = ExecutiveKPIs(
         arr=KPIMetric(
             value=arr_val, formatted=format_inr(arr_val, compact=True),
-            trend_pct=12.5, trend_direction="up", is_positive=True,
-            confidence=0.85, source="database",
-            sparkline=[arr_val * 0.85, arr_val * 0.88, arr_val * 0.91, arr_val * 0.94, arr_val * 0.97, arr_val],
+            trend_pct=arr_trend, trend_direction=arr_dir, is_positive=arr_trend >= 0,
+            confidence=confidence, source="database",
+            sparkline=_weekly_values(won_deals),
         ),
         mrr=KPIMetric(
             value=mrr_val, formatted=format_inr(mrr_val, compact=True),
-            trend_pct=8.3, trend_direction="up", is_positive=True,
-            confidence=0.82, source="database",
+            trend_pct=arr_trend, trend_direction=arr_dir, is_positive=arr_trend >= 0,
+            confidence=confidence, source="database",
         ),
         pipeline_value=KPIMetric(
             value=total_pipeline, formatted=format_inr(total_pipeline, compact=True),
-            trend_pct=15.2, trend_direction="up", is_positive=True,
-            confidence=0.78, source="database",
+            trend_pct=pipe_trend, trend_direction=pipe_dir, is_positive=pipe_trend >= 0,
+            confidence=confidence, source="database",
         ),
         win_rate=KPIMetric(
             value=win_rate, formatted=f"{win_rate:.0f}%",
-            trend_pct=-2.1 if win_rate < 60 else 3.0, trend_direction="down" if win_rate < 60 else "up",
-            is_positive=win_rate >= 50, confidence=0.90, source="database",
+            trend_pct=wr_trend, trend_direction=wr_dir,
+            is_positive=wr_trend >= 0, confidence=confidence, source="database",
         ),
         avg_deal_cycle=KPIMetric(
             value=avg_days, formatted=f"{avg_days:.0f} days",
-            trend_pct=-5.0, trend_direction="down", is_positive=True,
-            confidence=0.88, source="database",
+            trend_pct=cycle_trend, trend_direction=cycle_dir,
+            is_positive=cycle_trend <= 0, confidence=confidence, source="database",
         ),
         net_revenue_retention=KPIMetric(
-            value=108, formatted="108%",
-            trend_pct=3.2, trend_direction="up", is_positive=True,
-            confidence=0.75, source="estimated",
+            value=nrr, formatted=f"{nrr:.0f}%",
+            trend_pct=nrr_trend, trend_direction=nrr_dir, is_positive=nrr_trend >= 0,
+            confidence=confidence, source="database",
         ),
     )
 
@@ -118,13 +194,13 @@ async def executive_summary(
     heatmap_cells = []
     for ind, data in sorted(industry_risk.items(), key=lambda x: -x[1]["total_value"])[:8]:
         avg_risk = data["total_risk"] / data["count"] if data["count"] > 0 else 0
-        level = "critical" if avg_risk > 0.7 else "high" if avg_risk > 0.5 else "medium" if avg_risk > 0.3 else "low"
+        level = classify_risk(avg_risk)
         heatmap_cells.append(RiskHeatmapCell(
             segment=ind, risk_level=level, deal_count=data["count"], total_value_inr=data["total_value"],
         ))
 
     sorted_active = sorted(active_deals, key=lambda d: d.value_inr, reverse=True)
-    at_risk = sorted([d for d in active_deals if (d.risk_score or 0) > 0.4], key=lambda d: -(d.risk_score or 0))
+    at_risk = sorted([d for d in active_deals if (d.risk_score or 0) > 40], key=lambda d: -(d.risk_score or 0))
 
     async def deal_to_summary(d: Deal) -> DealSummary:
         p = await db.get(Prospect, d.prospect_id)
@@ -137,10 +213,41 @@ async def executive_summary(
     top_deals = [await deal_to_summary(d) for d in sorted_active[:5]]
     at_risk_deals = [await deal_to_summary(d) for d in at_risk[:5]]
 
+    now = datetime.utcnow()
+    weekly_revenue = _weekly_values(won_deals, weeks=12)
+    revenue_forecast_data = {
+        "historical": [
+            {"date": (now - timedelta(weeks=12 - i)).strftime("%Y-%m-%d"), "revenue": v}
+            for i, v in enumerate(weekly_revenue)
+        ],
+        "forecast": [
+            {
+                "date": (now + timedelta(weeks=i + 1)).strftime("%Y-%m-%d"),
+                "p10": total_won_value * (0.9 + i * 0.02),
+                "p50": total_won_value * (1.0 + i * 0.04),
+                "p90": total_won_value * (1.1 + i * 0.06),
+            }
+            for i in range(4)
+        ],
+    }
+
+    velocity_data = []
+    for i, s in enumerate(["Lead", "MQL", "SQL", "Discovery", "Proposal", "Negotiation"]):
+        stage_deals = [d for d in active_deals if d.stage == s]
+        avg_days = sum(d.days_in_stage for d in stage_deals) / max(len(stage_deals), 1)
+        velocity_data.append({
+            "week": s,
+            "avgDaysInStage": round(avg_days, 1),
+            "throughput": len(stage_deals),
+            "rollingMeanDays": round(avg_days * 0.9, 1),
+            "upperControlLimit": round(avg_days * 1.5, 1),
+            "lowerControlLimit": round(avg_days * 0.5, 1),
+        })
+
     summary = ExecutiveSummary(
         kpis=kpis,
-        revenue_forecast=[],
-        pipeline_velocity=[],
+        revenue_forecast=revenue_forecast_data,
+        pipeline_velocity=velocity_data,
         funnel=funnel,
         risk_heatmap=RiskHeatmapData(cells=heatmap_cells),
         top_deals=top_deals,

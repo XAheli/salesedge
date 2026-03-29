@@ -36,7 +36,7 @@ export function useDataSourceList() {
 export function useHealthReady() {
   return useQuery({
     queryKey: ["health", "ready"],
-    queryFn: () => get<{ status: string; timestamp: string }>("/v1/health"),
+    queryFn: () => get<{ status: string; timestamp: string }>("/v1/health/ready"),
     refetchInterval: 30_000,
   });
 }

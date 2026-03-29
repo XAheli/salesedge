@@ -20,7 +20,7 @@ function createClient(): AxiosInstance {
 
   instance.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
-      const token = localStorage.getItem("salesedge_token");
+      const token = localStorage.getItem("salesedge-token");
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -33,7 +33,7 @@ function createClient(): AxiosInstance {
     (response) => response,
     (error: AxiosError<APIResponse<unknown>>) => {
       if (error.response?.status === 401) {
-        localStorage.removeItem("salesedge_token");
+        localStorage.removeItem("salesedge-token");
         if (window.location.pathname !== "/login") {
           window.location.href = "/login";
         }

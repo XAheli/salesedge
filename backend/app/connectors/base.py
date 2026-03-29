@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import enum
 import time
 from abc import ABC, abstractmethod
@@ -165,6 +166,9 @@ class BaseConnector(ABC):
         self._error_count: int = 0
         self._total_response_time_ms: float = 0.0
 
+        self._last_request_time: float = 0
+        self._min_interval: float = 1.0 / max(rate_limit or 10, 1)
+
         self._log = structlog.get_logger(f"connector.{name}")
 
     # ── HTTP client lifecycle ────────────────────────────────────
@@ -239,6 +243,12 @@ class BaseConnector(ABC):
         req_headers = dict(headers or {})
         req_params = dict(params or {})
         self._apply_auth(req_headers, req_params)
+
+        now = time.monotonic()
+        elapsed_since_last = now - self._last_request_time
+        if elapsed_since_last < self._min_interval:
+            await asyncio.sleep(self._min_interval - elapsed_since_last)
+        self._last_request_time = time.monotonic()
 
         client = await self._get_client()
         start = time.monotonic()
@@ -366,6 +376,14 @@ class BaseConnector(ABC):
         self._request_count = 0
         self._error_count = 0
         self._total_response_time_ms = 0.0
+
+    # ── Generic fetch adapter ─────────────────────────────────────
+
+    async def fetch(self, **kwargs: Any) -> list[dict[str, Any]]:
+        """Generic fetch adapter for ingestion pipeline compatibility.
+        Subclasses can override with specific fetch logic."""
+        result = await self.health_check()
+        return [{"source": self.name, "status": result.status, "data": {}}]
 
     # ── Abstract interface ───────────────────────────────────────
 

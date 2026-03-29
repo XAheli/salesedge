@@ -1,0 +1,43 @@
+%% SalesEdge — Container Diagram (C4 Level 2)
+%% Internal containers and their communication paths
+
+graph TB
+    USER["Sales User<br/><i>Browser</i>"]
+
+    subgraph salesedge_network ["Docker Network: salesedge"]
+        direction TB
+
+        subgraph frontend_container ["Frontend Container"]
+            FE["<b>React SPA</b><br/>React 18 + TypeScript<br/>Vite 5, Tailwind CSS<br/>Recharts, Radix UI<br/><i>Port 5173 (dev) / 80 (prod)</i>"]
+        end
+
+        subgraph backend_container ["Backend Container"]
+            API["<b>FastAPI Server</b><br/>Python 3.12, SQLModel<br/>22+ API endpoints<br/>4 AI Agents<br/><i>Port 8000</i>"]
+
+            INGEST["<b>Ingestion Pipeline</b><br/>33 data connectors<br/>Scheduler, Normalizer<br/>Quality Scorer"]
+
+            SCORING["<b>Scoring Engines</b><br/>Prospect Fit, Deal Risk<br/>Churn Hazard, Recovery<br/>Calibration Layer"]
+
+            AGENTS["<b>Agent Orchestrator</b><br/>Prospect, Deal Intel<br/>Retention, Competitive<br/>Action Engine"]
+        end
+
+        subgraph postgres_container ["PostgreSQL Container"]
+            PG["<b>PostgreSQL 16</b><br/>Users, Prospects<br/>Deals, Signals<br/><i>Port 5432</i>"]
+        end
+
+        subgraph redis_container ["Redis Container"]
+            RD["<b>Redis 7</b><br/>Multi-tier cache<br/>Session store<br/><i>Port 6379</i>"]
+        end
+    end
+
+    USER -->|"HTTPS / WSS"| FE
+    FE -->|"/api/* proxy"| API
+    API --> INGEST
+    API --> SCORING
+    API --> AGENTS
+    API -->|"SQLModel ORM"| PG
+    API -->|"Cache reads/writes"| RD
+    INGEST -->|"Bulk inserts"| PG
+    SCORING -->|"Feature reads"| PG
+    AGENTS -->|"Context lookups"| PG
+    AGENTS -->|"Prompt cache"| RD

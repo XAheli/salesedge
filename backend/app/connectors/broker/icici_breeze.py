@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -11,13 +12,13 @@ logger = structlog.get_logger(__name__)
 
 
 class ICICIBreezeConnector(BaseConnector):
-    """ICICI Direct Breeze API connector — **stub, not yet fully implemented**.
+    """ICICI Direct Breeze API connector.
 
     Authentication uses ``api_key`` + ``api_secret`` with a session
     token from the ICICI Direct SSO flow.
     """
 
-    _IMPLEMENTED = False
+    _IMPLEMENTED = True
 
     def __init__(
         self,
@@ -44,21 +45,60 @@ class ICICIBreezeConnector(BaseConnector):
         headers.setdefault("Content-Type", "application/json")
 
     async def get_quote(self, stock_code: str, exchange: str = "NSE") -> dict[str, Any]:
-        raise NotImplementedError("ICICI Breeze connector is not yet implemented")
+        try:
+            return await self._request(
+                "GET",
+                "/customerquote",
+                params={"stock_code": stock_code, "exchange_code": exchange},
+                cache_key=f"icici:quote:{stock_code}:{exchange}",
+                cache_ttl=10,
+            )
+        except Exception as exc:
+            logger.error("icici_breeze.get_quote_failed", error=str(exc))
+            raise
 
     async def get_historical_data(
         self, stock_code: str, exchange: str, interval: str, from_date: str, to_date: str
     ) -> dict[str, Any]:
-        raise NotImplementedError("ICICI Breeze connector is not yet implemented")
+        try:
+            return await self._request(
+                "GET",
+                "/historicalcharts",
+                params={
+                    "stock_code": stock_code,
+                    "exchange_code": exchange,
+                    "interval": interval,
+                    "from_date": from_date,
+                    "to_date": to_date,
+                },
+                cache_key=f"icici:hist:{stock_code}:{exchange}:{interval}:{from_date}:{to_date}",
+                cache_ttl=300,
+            )
+        except Exception as exc:
+            logger.error("icici_breeze.get_historical_data_failed", error=str(exc))
+            raise
 
     async def health_check(self) -> ConnectorHealth:
-        return ConnectorHealth(
-            status="degraded",
-            last_check=datetime.now(timezone.utc),
-            response_time_ms=0.0,
-            error_rate=0.0,
-            details={"reason": "stub — not yet implemented"},
-        )
+        start = time.monotonic()
+        try:
+            await self._request("GET", "/customerquote", params={"stock_code": "ICIBAN", "exchange_code": "NSE"})
+            elapsed = (time.monotonic() - start) * 1000
+            return ConnectorHealth(
+                status="healthy",
+                last_check=datetime.now(timezone.utc),
+                response_time_ms=elapsed,
+                error_rate=self.error_rate,
+                details={"endpoint": "/customerquote"},
+            )
+        except Exception as exc:
+            elapsed = (time.monotonic() - start) * 1000
+            return ConnectorHealth(
+                status="unhealthy",
+                last_check=datetime.now(timezone.utc),
+                response_time_ms=elapsed,
+                error_rate=self.error_rate,
+                details={"error": str(exc)},
+            )
 
     def get_business_use_cases(self) -> list[str]:
         return ["deal_intelligence", "prospect_research"]

@@ -194,11 +194,39 @@ class OGDCrawler:
     async def _fetch_ministry_catalog(
         self, ministry_name: str,
     ) -> list[dict[str, Any]]:
-        """Fetch the dataset catalog for a ministry from OGD.
+        """Fetch the dataset catalog for a ministry from the OGD India API."""
+        if not self._api_key:
+            logger.warning("ogd_crawler.no_api_key", ministry=ministry_name)
+            return []
 
-        Stub implementation; replaced by HTTP client in production.
-        """
+        import httpx
+
         logger.debug("ogd_crawler.fetching_catalog", ministry=ministry_name)
+        try:
+            async with httpx.AsyncClient(timeout=15) as client:
+                resp = await client.get(
+                    "https://api.data.gov.in/lists",
+                    params={
+                        "format": "json",
+                        "api-key": self._api_key,
+                        "filters[org]": ministry_name,
+                        "limit": 50,
+                    },
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return data.get("records", [])
+                logger.warning(
+                    "ogd_crawler.fetch_failed",
+                    ministry=ministry_name,
+                    status=resp.status_code,
+                )
+        except Exception as exc:
+            logger.error(
+                "ogd_crawler.fetch_error",
+                ministry=ministry_name,
+                error=str(exc),
+            )
         return []
 
     @staticmethod

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -11,13 +12,13 @@ logger = structlog.get_logger(__name__)
 
 
 class FyersConnector(BaseConnector):
-    """Fyers API v3 connector — **stub, not yet fully implemented**.
+    """Fyers API v3 connector.
 
     Authentication requires ``app_id`` and a session-based access
     token obtained via the Fyers OAuth flow.
     """
 
-    _IMPLEMENTED = False
+    _IMPLEMENTED = True
 
     def __init__(
         self,
@@ -44,24 +45,75 @@ class FyersConnector(BaseConnector):
         headers.setdefault("Content-Type", "application/json")
 
     async def get_quote(self, symbols: list[str]) -> dict[str, Any]:
-        raise NotImplementedError("Fyers connector is not yet implemented")
+        symbols_str = ",".join(symbols)
+        try:
+            return await self._request(
+                "GET",
+                "/quotes/",
+                params={"symbols": symbols_str},
+                cache_key=f"fyers:quote:{symbols_str}",
+                cache_ttl=10,
+            )
+        except Exception as exc:
+            logger.error("fyers.get_quote_failed", error=str(exc))
+            raise
 
     async def get_historical_data(
         self, symbol: str, resolution: str, from_epoch: int, to_epoch: int
     ) -> dict[str, Any]:
-        raise NotImplementedError("Fyers connector is not yet implemented")
+        try:
+            return await self._request(
+                "GET",
+                "/history/",
+                params={
+                    "symbol": symbol,
+                    "resolution": resolution,
+                    "date_format": "0",
+                    "range_from": str(from_epoch),
+                    "range_to": str(to_epoch),
+                    "cont_flag": "1",
+                },
+                cache_key=f"fyers:hist:{symbol}:{resolution}:{from_epoch}:{to_epoch}",
+                cache_ttl=300,
+            )
+        except Exception as exc:
+            logger.error("fyers.get_historical_data_failed", error=str(exc))
+            raise
 
     async def get_market_depth(self, symbol: str) -> dict[str, Any]:
-        raise NotImplementedError("Fyers connector is not yet implemented")
+        try:
+            return await self._request(
+                "GET",
+                "/depth/",
+                params={"symbol": symbol, "ohlcv_flag": "1"},
+                cache_key=f"fyers:depth:{symbol}",
+                cache_ttl=5,
+            )
+        except Exception as exc:
+            logger.error("fyers.get_market_depth_failed", error=str(exc))
+            raise
 
     async def health_check(self) -> ConnectorHealth:
-        return ConnectorHealth(
-            status="degraded",
-            last_check=datetime.now(timezone.utc),
-            response_time_ms=0.0,
-            error_rate=0.0,
-            details={"reason": "stub — not yet implemented"},
-        )
+        start = time.monotonic()
+        try:
+            await self._request("GET", "/quotes/", params={"symbols": "NSE:NIFTY50-INDEX"})
+            elapsed = (time.monotonic() - start) * 1000
+            return ConnectorHealth(
+                status="healthy",
+                last_check=datetime.now(timezone.utc),
+                response_time_ms=elapsed,
+                error_rate=self.error_rate,
+                details={"endpoint": "/quotes/"},
+            )
+        except Exception as exc:
+            elapsed = (time.monotonic() - start) * 1000
+            return ConnectorHealth(
+                status="unhealthy",
+                last_check=datetime.now(timezone.utc),
+                response_time_ms=elapsed,
+                error_rate=self.error_rate,
+                details={"error": str(exc)},
+            )
 
     def get_business_use_cases(self) -> list[str]:
         return ["deal_intelligence", "prospect_research"]

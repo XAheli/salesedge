@@ -30,6 +30,16 @@ export const RetentionCohort = memo(function RetentionCohort({
 
   return (
     <div className={`overflow-x-auto ${className}`}>
+      <details className="mb-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {data.map((row) => (
+            <p key={row.cohort}>
+              {row.cohort}: {row.values.map((v, i) => `M${i}=${v.toFixed(0)}%`).join(", ")}
+            </p>
+          ))}
+        </div>
+      </details>
       <table className="w-full border-collapse text-xs">
         <thead>
           <tr>

@@ -135,6 +135,18 @@ export const PipelineVelocity = memo(function PipelineVelocity({
           )}
         </ComposedChart>
       </ResponsiveContainer>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {data.map((d) => (
+            <p key={d.week}>
+              {d.week}: {d.avgDaysInStage}d avg, {d.throughput} deals moved
+              {d.rollingMeanDays !== undefined ? `, rolling mean ${d.rollingMeanDays}d` : ""}
+            </p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

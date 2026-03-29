@@ -123,7 +123,7 @@ function AtRiskTable({ deals }: { deals: RetentionOverviewData["at_risk_deals"] 
         </thead>
         <tbody>
           {deals.map((d) => {
-            const riskPct = Math.round((d.risk_score ?? 0) * 100);
+            const riskPct = Math.round(d.risk_score ?? 0);
             const churnPct = Math.round((d.churn_probability ?? 0) * 100);
             const riskBand = d.risk_band ?? "medium";
             const cfg = RISK_CONFIG[riskBand] ?? RISK_CONFIG.medium;

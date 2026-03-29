@@ -3,8 +3,9 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlmodel import select
+from sqlmodel import select, func, col, or_
 
+from app.config import classify_risk
 from app.dependencies import DBSession, RedisClient
 from app.models.deal import Deal
 from app.models.prospect import Prospect
@@ -17,31 +18,49 @@ router = APIRouter()
 @router.get("", response_model=PaginatedResponse[DealSummary])
 async def list_deals(
     db: DBSession,
+    search: str | None = Query(None),
     stage: str | None = Query(None),
     owner: str | None = Query(None),
     min_value: float | None = Query(None),
     max_value: float | None = Query(None),
+    value_min: float | None = Query(None),
+    value_max: float | None = Query(None),
     sort_by: str = Query("value_inr"),
     sort_order: str = Query("desc"),
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100),
 ) -> PaginatedResponse[DealSummary]:
     """List deals with optional filters and pagination."""
+    effective_min = min_value if min_value is not None else value_min
+    effective_max = max_value if max_value is not None else value_max
+
     query = select(Deal, Prospect.company_name).join(
         Prospect, Deal.prospect_id == Prospect.id, isouter=True
     )
 
+    filters = []
+    if search:
+        pattern = f"%{search}%"
+        filters.append(or_(
+            col(Prospect.company_name).ilike(pattern),
+            col(Deal.title).ilike(pattern),
+        ))
     if stage:
-        query = query.where(Deal.stage == stage)
+        stages = [s.strip() for s in stage.split(",") if s.strip()]
+        filters.append(Deal.stage.in_(stages) if len(stages) > 1 else Deal.stage == stages[0])  # type: ignore[union-attr]
     if owner:
-        query = query.where(Deal.owner == owner)
-    if min_value is not None:
-        query = query.where(Deal.value_inr >= min_value)
-    if max_value is not None:
-        query = query.where(Deal.value_inr <= max_value)
+        owners = [o.strip() for o in owner.split(",") if o.strip()]
+        filters.append(Deal.owner.in_(owners) if len(owners) > 1 else Deal.owner == owners[0])  # type: ignore[union-attr]
+    if effective_min is not None:
+        filters.append(Deal.value_inr >= effective_min)
+    if effective_max is not None:
+        filters.append(Deal.value_inr <= effective_max)
 
-    sort_col = getattr(Deal, sort_by, Deal.value_inr)
-    query = query.order_by(sort_col.desc() if sort_order == "desc" else sort_col.asc())
+    for f in filters:
+        query = query.where(f)
+
+    sort_column = getattr(Deal, sort_by, Deal.value_inr)
+    query = query.order_by(sort_column.desc() if sort_order == "desc" else sort_column.asc())
 
     offset = (page - 1) * page_size
     paginated = query.offset(offset).limit(page_size)
@@ -62,7 +81,16 @@ async def list_deals(
         for deal, company_name in rows
     ]
 
-    return PaginatedResponse(items=items, total=len(items), page=page, page_size=page_size)
+    count_stmt = select(func.count()).select_from(Deal).join(
+        Prospect, Deal.prospect_id == Prospect.id, isouter=True
+    )
+    for f in filters:
+        count_stmt = count_stmt.where(f)
+    count_result = await db.exec(count_stmt)  # type: ignore[arg-type]
+    total = count_result.one()
+    pages = max(1, (total + page_size - 1) // page_size)
+
+    return PaginatedResponse(items=items, total=total, page=page, page_size=page_size, pages=pages)
 
 
 @router.get("/risk-summary", response_model=APIResponse[dict])
@@ -81,14 +109,7 @@ async def deal_risk_summary(db: DBSession) -> APIResponse[dict]:
     }
     for deal in active_deals:
         score = deal.risk_score or 0.0
-        if score >= 80:
-            risk_buckets["critical"].append(str(deal.id))
-        elif score >= 60:
-            risk_buckets["high"].append(str(deal.id))
-        elif score >= 30:
-            risk_buckets["medium"].append(str(deal.id))
-        else:
-            risk_buckets["low"].append(str(deal.id))
+        risk_buckets[classify_risk(score)].append(str(deal.id))
 
     summary = {
         "total_active": len(active_deals),

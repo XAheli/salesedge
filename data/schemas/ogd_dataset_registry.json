@@ -1,0 +1,108 @@
+{
+  "version": "1.0.0",
+  "description": "Registry of discovered Open Government Data (OGD) datasets from data.gov.in relevant to SalesEdge",
+  "source_url": "https://data.gov.in",
+  "last_crawled": null,
+  "datasets": [
+    {
+      "resource_id": "9ef84268-d588-465a-a308-a864a43d0070",
+      "title": "Index of Industrial Production (IIP)",
+      "organization": "MOSPI",
+      "category": "macro_indicator",
+      "frequency": "monthly",
+      "fields": ["sector", "index_value", "period", "base_year"],
+      "use_case": "Sector growth signals for prospect scoring",
+      "priority": "high"
+    },
+    {
+      "resource_id": "consumer-price-index-resource",
+      "title": "Consumer Price Index (CPI)",
+      "organization": "MOSPI",
+      "category": "macro_indicator",
+      "frequency": "monthly",
+      "fields": ["group", "index_value", "period", "region"],
+      "use_case": "Inflation context for deal value assessment",
+      "priority": "medium"
+    },
+    {
+      "resource_id": "gdp-quarterly-estimates",
+      "title": "GDP Quarterly Estimates",
+      "organization": "MOSPI",
+      "category": "macro_indicator",
+      "frequency": "quarterly",
+      "fields": ["sector", "gdp_value", "growth_rate", "quarter"],
+      "use_case": "Sector-level GDP growth for prospect fit scoring",
+      "priority": "high"
+    },
+    {
+      "resource_id": "rbi-key-rates",
+      "title": "RBI Key Policy Rates",
+      "organization": "RBI",
+      "category": "monetary_policy",
+      "frequency": "event_driven",
+      "fields": ["rate_type", "rate_value", "effective_date"],
+      "use_case": "Interest rate signals for banking/NBFC prospects",
+      "priority": "high"
+    },
+    {
+      "resource_id": "sebi-mutual-fund-data",
+      "title": "SEBI Mutual Fund AUM Data",
+      "organization": "SEBI",
+      "category": "capital_markets",
+      "frequency": "monthly",
+      "fields": ["fund_house", "scheme_type", "aum", "period"],
+      "use_case": "Financial sector prospect identification",
+      "priority": "medium"
+    },
+    {
+      "resource_id": "mca-company-master",
+      "title": "MCA Company Master Data",
+      "organization": "MCA",
+      "category": "corporate_registry",
+      "frequency": "daily",
+      "fields": ["cin", "company_name", "status", "authorized_capital", "paid_up_capital", "date_of_incorporation", "registered_state"],
+      "use_case": "Company profile enrichment and firmographic data",
+      "priority": "high"
+    },
+    {
+      "resource_id": "foreign-trade-statistics",
+      "title": "Foreign Trade Statistics",
+      "organization": "DGFT",
+      "category": "trade",
+      "frequency": "monthly",
+      "fields": ["commodity", "export_value", "import_value", "country", "period"],
+      "use_case": "Trade signals for export-oriented prospects",
+      "priority": "low"
+    },
+    {
+      "resource_id": "electricity-generation-data",
+      "title": "Electricity Generation by Source",
+      "organization": "CEA",
+      "category": "energy",
+      "frequency": "monthly",
+      "fields": ["source_type", "generation_gwh", "state", "period"],
+      "use_case": "Energy sector prospect identification",
+      "priority": "low"
+    },
+    {
+      "resource_id": "telecom-subscribers",
+      "title": "Telecom Subscribers Data",
+      "organization": "TRAI",
+      "category": "telecom",
+      "frequency": "monthly",
+      "fields": ["operator", "subscribers", "region", "period"],
+      "use_case": "Telecom sector sizing for prospect scoring",
+      "priority": "medium"
+    },
+    {
+      "resource_id": "startup-recognition-data",
+      "title": "DPIIT Recognized Startups",
+      "organization": "DPIIT",
+      "category": "startup_ecosystem",
+      "frequency": "quarterly",
+      "fields": ["startup_name", "industry", "state", "recognition_date"],
+      "use_case": "High-growth prospect discovery in startup segment",
+      "priority": "medium"
+    }
+  ]
+}

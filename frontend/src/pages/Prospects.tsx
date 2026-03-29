@@ -2,7 +2,6 @@ import { useState, useMemo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
-  Filter,
   Download,
   ChevronLeft,
   ChevronRight,
@@ -21,6 +20,8 @@ import {
 import { formatRelativeTime } from "@/utils/date-helpers";
 import { SkeletonTable } from "@/components/data-display/LoadingSkeleton";
 import { ErrorBoundary } from "@/components/shared/ErrorBoundary";
+import { FilterBar } from "@/components/shared/FilterBar";
+import { exportToCSV } from "@/utils/export";
 
 type SortField =
   | "company_name"
@@ -73,8 +74,8 @@ function SortHeader({
 
 export default function Prospects() {
   const [localSearch, setLocalSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortField>("fit_score");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [sortBy, setSortBy] = useState<SortField>("company_name");
+  const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [page, setPage] = useState(1);
   const pageSize = 25;
 
@@ -148,15 +149,26 @@ export default function Prospects() {
               + market data
             </p>
           </div>
-          <div className="flex gap-2">
-            <button className="flex items-center gap-1.5 rounded-lg border border-neutral-bg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-neutral-bg">
-              <Filter size={14} /> Filters
-            </button>
-            <button className="flex items-center gap-1.5 rounded-lg border border-neutral-bg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-neutral-bg">
-              <Download size={14} /> Export
-            </button>
-          </div>
+          <button
+            className="flex items-center gap-1.5 rounded-lg border border-neutral-bg px-3 py-2 text-xs font-medium text-text-secondary hover:bg-neutral-bg"
+            onClick={() =>
+              exportToCSV(
+                filtered as unknown as Record<string, unknown>[],
+                [
+                  { key: "company_name", header: "Company Name" },
+                  { key: "industry", header: "Industry" },
+                  { key: "state", header: "State" },
+                  { key: "employee_count", header: "Employees" },
+                ],
+                "prospects",
+              )
+            }
+          >
+            <Download size={14} /> Export
+          </button>
         </div>
+
+        <FilterBar />
 
         <div className="relative">
           <Search

@@ -48,7 +48,7 @@ function riskBorder(level: string): string {
 
 function DealCard({ deal }: { deal: DealItem }) {
   const riskLevel = computeRiskLevel(deal.risk_score);
-  const riskPct = Math.round(deal.risk_score * 100);
+  const riskPct = Math.round(deal.risk_score);
   const border =
     deal.stage === "Won"
       ? "border-l-revenue-positive"

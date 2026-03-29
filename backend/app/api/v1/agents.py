@@ -126,7 +126,7 @@ async def get_agents_status() -> APIResponse[list[AgentStatus]]:
     return APIResponse(
         success=True,
         data=agents,
-        meta=ResponseMetadata(),
+        metadata=ResponseMetadata(),
     )
 
 
@@ -157,7 +157,7 @@ async def agent_chat(req: AgentChatRequest) -> APIResponse[AgentChatResponse]:
             model_used=llm.model,
             is_configured=llm.is_configured,
         ),
-        meta=ResponseMetadata(),
+        metadata=ResponseMetadata(),
     )
 
 
@@ -180,7 +180,7 @@ async def analyze_prospect(req: ProspectAnalysisRequest) -> APIResponse[dict]:
     return APIResponse(
         success=True,
         data=result if isinstance(result, dict) else result.model_dump(),
-        meta=ResponseMetadata(),
+        metadata=ResponseMetadata(),
     )
 
 
@@ -195,7 +195,7 @@ async def analyze_deal_risk(req: DealRiskRequest) -> APIResponse[dict]:
     return APIResponse(
         success=True,
         data=result if isinstance(result, dict) else result.model_dump(),
-        meta=ResponseMetadata(),
+        metadata=ResponseMetadata(),
     )
 
 
@@ -220,7 +220,7 @@ async def generate_outreach(req: OutreachRequest) -> APIResponse[dict]:
     return APIResponse(
         success=True,
         data=result if isinstance(result, dict) else result.model_dump(),
-        meta=ResponseMetadata(),
+        metadata=ResponseMetadata(),
     )
 
 
@@ -247,5 +247,5 @@ async def generate_battlecard(
     return APIResponse(
         success=True,
         data=result if isinstance(result, dict) else result.model_dump(),
-        meta=ResponseMetadata(),
+        metadata=ResponseMetadata(),
     )

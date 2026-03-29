@@ -33,6 +33,7 @@ export interface PaginatedResponse<T> {
   page: number;
   page_size: number;
   pages?: number;
+  metadata: ResponseMetadata;
 }
 
 export interface PaginationInfo {

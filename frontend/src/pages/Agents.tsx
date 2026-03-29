@@ -125,14 +125,14 @@ export default function Agents() {
               <div>
                 <p className="text-xs font-medium text-caution">LLM not configured</p>
                 <p className="mt-0.5 text-[11px] text-text-tertiary">
-                  Set your OpenRouter API key in{" "}
+                  Set an LLM API key in{" "}
                   <button
                     onClick={() => navigate("/settings")}
                     className="font-medium text-primary-500 hover:text-primary-600"
                   >
                     Settings
-                  </button>{" "}
-                  to enable AI agents. Free models available.
+                  </button>
+                  . Supports OpenRouter, Groq (free), OpenAI, or Ollama (local).
                 </p>
               </div>
             </div>

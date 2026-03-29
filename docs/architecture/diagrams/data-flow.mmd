@@ -1,0 +1,64 @@
+%% SalesEdge — Data Flow Diagram
+%% Tracks data from external sources through ingestion to the user
+
+flowchart LR
+    subgraph Sources ["External Data Sources"]
+        GOV["Government APIs<br/><i>OGD, RBI, MOSPI,<br/>SEBI, MCA</i>"]
+        MKT["Market APIs<br/><i>NSE, BSE, Brokers</i>"]
+        ENR["Enrichment APIs<br/><i>Finnhub, Alpha Vantage,<br/>FMP, CoinGecko, FX</i>"]
+        RSS["RSS Feeds<br/><i>Business news</i>"]
+    end
+
+    subgraph Ingestion ["Ingestion Pipeline"]
+        SCHED["Scheduler<br/><i>Cron-based triggers</i>"]
+        CONN["Connectors<br/><i>33 adapters</i>"]
+        DEDUP["Deduplication"]
+        NORM["Normalization<br/><i>INR formatting,<br/>IST timestamps</i>"]
+        QS["Quality Scorer<br/><i>Completeness,<br/>freshness, accuracy</i>"]
+    end
+
+    subgraph Storage ["Persistence"]
+        PG[("PostgreSQL 16<br/><i>Prospects, Deals,<br/>Signals, Users</i>")]
+        REDIS[("Redis 7<br/><i>Cache tiers</i>")]
+        DUCK[("DuckDB<br/><i>Analytical queries</i>")]
+    end
+
+    subgraph Processing ["Scoring & AI"]
+        FS["Feature Store"]
+        SCORE["Scoring Engines<br/><i>Fit, Risk, Churn,<br/>Recovery Priority</i>"]
+        AGENTS["AI Agents<br/><i>Prospect, Deal,<br/>Retention, Competitive</i>"]
+    end
+
+    subgraph API ["Backend API"]
+        REST["FastAPI Endpoints<br/><i>/api/v1/*</i>"]
+        WS["WebSocket<br/><i>Deal alerts,<br/>data updates</i>"]
+    end
+
+    subgraph Frontend ["React Frontend"]
+        DASH["Dashboard"]
+        PAGES["Pages<br/><i>Prospects, Deals,<br/>Retention, Intel</i>"]
+        CHARTS["Chart Components<br/><i>14 visualizations</i>"]
+    end
+
+    GOV --> CONN
+    MKT --> CONN
+    ENR --> CONN
+    RSS --> CONN
+
+    SCHED --> CONN
+    CONN --> DEDUP --> NORM --> QS --> PG
+    QS --> REDIS
+
+    PG --> FS --> SCORE --> PG
+    PG --> AGENTS
+    AGENTS -->|"LLM calls"| LLM["LLM Provider"]
+
+    PG --> REST
+    REDIS --> REST
+    SCORE --> REST
+    AGENTS --> REST
+
+    REST --> WS
+    REST --> DASH
+    REST --> PAGES
+    PAGES --> CHARTS

@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from sqlmodel import select
 
 from app.config import get_settings
-from app.dependencies import DBSession
+from app.dependencies import CurrentUser, DBSession
 from app.models.user import User
 from app.schemas.common import APIResponse
 
@@ -29,7 +29,7 @@ class RegisterRequest(BaseModel):
     name: str
     email: str
     password: str
-    role: str = "Admin"
+    role: str = "viewer"
     organization: str | None = None
 
 

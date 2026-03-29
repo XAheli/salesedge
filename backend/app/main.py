@@ -24,10 +24,10 @@ def get_engine() -> AsyncEngine:
     if _engine is None:
         settings = get_settings()
         _engine = create_async_engine(
-            settings.database_url,
+            settings.async_database_url,
             echo=settings.debug,
-            pool_size=20,
-            max_overflow=10,
+            pool_size=5,
+            max_overflow=3,
         )
     return _engine
 
@@ -85,7 +85,16 @@ def create_app() -> FastAPI:
     )
     app.add_middleware(RequestIDMiddleware)
 
+    if settings.environment == "production":
+        from app.api.middleware.auth import JWTAuthMiddleware
+        app.add_middleware(JWTAuthMiddleware)
+
     app.include_router(v1_router, prefix="/api/v1")
+
+    from app.api.websocket.deal_alerts import router as ws_alerts_router
+    from app.api.websocket.data_updates import router as ws_data_router
+    app.include_router(ws_alerts_router)
+    app.include_router(ws_data_router)
 
     @app.get("/", tags=["root"])
     async def health_check() -> dict[str, str]:

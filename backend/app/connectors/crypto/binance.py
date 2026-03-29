@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -11,13 +12,13 @@ logger = structlog.get_logger(__name__)
 
 
 class BinanceConnector(BaseConnector):
-    """Binance public market data connector — **stub, not yet fully implemented**.
+    """Binance public market data connector.
 
     Uses the public (unauthenticated) endpoints for market data.
     Trading endpoints are out of scope for SalesEdge.
     """
 
-    _IMPLEMENTED = False
+    _IMPLEMENTED = True
 
     def __init__(
         self,
@@ -35,24 +36,70 @@ class BinanceConnector(BaseConnector):
         )
 
     async def get_ticker_price(self, symbol: str | None = None) -> dict[str, Any]:
-        raise NotImplementedError("Binance connector is not yet implemented")
+        params: dict[str, Any] = {}
+        if symbol:
+            params["symbol"] = symbol
+        try:
+            return await self._request(
+                "GET",
+                "/ticker/price",
+                params=params,
+                cache_key=f"binance:ticker:{symbol or 'all'}",
+                cache_ttl=10,
+            )
+        except Exception as exc:
+            logger.error("binance.get_ticker_price_failed", error=str(exc))
+            raise
 
     async def get_klines(
         self, symbol: str, interval: str, limit: int = 100
     ) -> dict[str, Any]:
-        raise NotImplementedError("Binance connector is not yet implemented")
+        try:
+            return await self._request(
+                "GET",
+                "/klines",
+                params={"symbol": symbol, "interval": interval, "limit": str(limit)},
+                cache_key=f"binance:klines:{symbol}:{interval}:{limit}",
+                cache_ttl=60,
+            )
+        except Exception as exc:
+            logger.error("binance.get_klines_failed", error=str(exc))
+            raise
 
     async def get_order_book(self, symbol: str, limit: int = 20) -> dict[str, Any]:
-        raise NotImplementedError("Binance connector is not yet implemented")
+        try:
+            return await self._request(
+                "GET",
+                "/depth",
+                params={"symbol": symbol, "limit": str(limit)},
+                cache_key=f"binance:depth:{symbol}:{limit}",
+                cache_ttl=5,
+            )
+        except Exception as exc:
+            logger.error("binance.get_order_book_failed", error=str(exc))
+            raise
 
     async def health_check(self) -> ConnectorHealth:
-        return ConnectorHealth(
-            status="degraded",
-            last_check=datetime.now(timezone.utc),
-            response_time_ms=0.0,
-            error_rate=0.0,
-            details={"reason": "stub — not yet implemented"},
-        )
+        start = time.monotonic()
+        try:
+            await self._request("GET", "/ping")
+            elapsed = (time.monotonic() - start) * 1000
+            return ConnectorHealth(
+                status="healthy",
+                last_check=datetime.now(timezone.utc),
+                response_time_ms=elapsed,
+                error_rate=self.error_rate,
+                details={"endpoint": "/ping"},
+            )
+        except Exception as exc:
+            elapsed = (time.monotonic() - start) * 1000
+            return ConnectorHealth(
+                status="unhealthy",
+                last_check=datetime.now(timezone.utc),
+                response_time_ms=elapsed,
+                error_rate=self.error_rate,
+                details={"error": str(exc)},
+            )
 
     def get_business_use_cases(self) -> list[str]:
         return ["macro_context"]

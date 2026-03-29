@@ -1,0 +1,57 @@
+%% SalesEdge — Agent Orchestration Flow
+%% Shows how the orchestrator routes requests through specialized agents
+
+sequenceDiagram
+    participant User as Sales User
+    participant FE as React Frontend
+    participant API as FastAPI /agents
+    participant ORCH as Orchestrator
+    participant PA as Prospect Agent
+    participant DA as Deal Intel Agent
+    participant RA as Retention Agent
+    participant CA as Competitive Agent
+    participant AE as Action Engine
+    participant LLM as LLM Provider
+    participant DB as PostgreSQL
+
+    User->>FE: Chat message
+    FE->>API: POST /api/v1/agents/chat
+    API->>ORCH: route(message, context)
+
+    Note over ORCH: Classify intent &<br/>select agent(s)
+
+    alt Prospect query
+        ORCH->>PA: analyze(company, context)
+        PA->>DB: Fetch prospect data, signals
+        PA->>LLM: Generate analysis prompt
+        LLM-->>PA: Structured response
+        PA->>AE: suggest_actions(outreach, follow_up)
+        AE-->>PA: Action plan
+        PA-->>ORCH: ProspectAnalysis
+    else Deal risk query
+        ORCH->>DA: assess(deal_id, context)
+        DA->>DB: Fetch deal, history, signals
+        DA->>LLM: Risk assessment prompt
+        LLM-->>DA: Risk analysis + recovery plays
+        DA->>AE: suggest_actions(escalate, discount, champion)
+        AE-->>DA: Recovery playbook
+        DA-->>ORCH: DealIntelReport
+    else Retention / churn query
+        ORCH->>RA: predict(account_id, context)
+        RA->>DB: Fetch account health, usage
+        RA->>LLM: Churn prediction prompt
+        LLM-->>RA: Risk factors + interventions
+        RA->>AE: suggest_actions(qbr, feature_training)
+        AE-->>RA: Intervention plan
+        RA-->>ORCH: RetentionReport
+    else Competitive query
+        ORCH->>CA: battlecard(competitor, context)
+        CA->>DB: Fetch competitor signals, deals
+        CA->>LLM: Battlecard generation prompt
+        LLM-->>CA: Strengths, weaknesses, talk tracks
+        CA-->>ORCH: Battlecard
+    end
+
+    ORCH-->>API: AgentResponse
+    API-->>FE: JSON response
+    FE-->>User: Rendered analysis + actions

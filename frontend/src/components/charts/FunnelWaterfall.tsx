@@ -108,9 +108,9 @@ export const FunnelWaterfall = memo(function FunnelWaterfall({
             />
           )}
           <Bar dataKey="count" radius={[0, 4, 4, 0]} barSize={20}>
-            {data.map((_, idx) => (
+            {data.map((d, idx) => (
               <Cell
-                key={idx}
+                key={`${d.name}-${idx}`}
                 fill={GRADIENT_COLORS[Math.min(idx, GRADIENT_COLORS.length - 1)]}
               />
             ))}
@@ -126,7 +126,7 @@ export const FunnelWaterfall = memo(function FunnelWaterfall({
 
       <div className="mt-2 flex flex-wrap items-center gap-4 px-2">
         {stages.slice(0, -1).map((s, i) => (
-          <div key={s.name} className="flex items-center gap-1 text-[10px] text-text-tertiary">
+          <div key={`${s.name}-${i}`} className="flex items-center gap-1 text-[10px] text-text-tertiary">
             <span>{s.name}</span>
             <span className="text-text-secondary">→</span>
             <span className="font-medium text-text-primary">
@@ -135,6 +135,15 @@ export const FunnelWaterfall = memo(function FunnelWaterfall({
           </div>
         ))}
       </div>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {stages.map((s, i) => (
+            <p key={`${s.name}-${i}`}>{s.name}: {s.count.toLocaleString("en-IN")} ({s.conversionRate.toFixed(1)}% conversion)</p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

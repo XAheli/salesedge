@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlmodel import select
+from sqlmodel import select, col, or_
 
 from app.dependencies import CurrentUser, DBSession, RedisClient
 from app.models.prospect import Prospect
@@ -16,6 +16,7 @@ router = APIRouter()
 @router.get("", response_model=PaginatedResponse[ProspectSummary])
 async def list_prospects(
     db: DBSession,
+    search: str | None = Query(None),
     industry: str | None = Query(None),
     state: str | None = Query(None),
     min_fit_score: float | None = Query(None, ge=0.0, le=100.0),
@@ -31,29 +32,48 @@ async def list_prospects(
     """List prospects with filtering, sorting, and pagination."""
     query = select(Prospect)
 
+    filters = []
+    if search:
+        pattern = f"%{search}%"
+        filters.append(or_(
+            col(Prospect.company_name).ilike(pattern),
+            col(Prospect.industry).ilike(pattern),
+            col(Prospect.state).ilike(pattern),
+        ))
     if industry:
-        query = query.where(Prospect.industry == industry)
+        industries = [i.strip() for i in industry.split(",") if i.strip()]
+        filters.append(Prospect.industry.in_(industries) if len(industries) > 1 else Prospect.industry == industries[0])  # type: ignore[union-attr]
     if state:
-        query = query.where(Prospect.state == state)
+        states = [s.strip() for s in state.split(",") if s.strip()]
+        filters.append(Prospect.state.in_(states) if len(states) > 1 else Prospect.state == states[0])  # type: ignore[union-attr]
     if min_fit_score is not None:
-        query = query.where(Prospect.fit_score >= min_fit_score)
+        filters.append(Prospect.fit_score >= min_fit_score)
     if max_fit_score is not None:
-        query = query.where(Prospect.fit_score <= max_fit_score)
+        filters.append(Prospect.fit_score <= max_fit_score)
     if revenue_min_inr is not None:
-        query = query.where(Prospect.revenue_inr >= revenue_min_inr)
+        filters.append(Prospect.revenue_inr >= revenue_min_inr)
     if revenue_max_inr is not None:
-        query = query.where(Prospect.revenue_inr <= revenue_max_inr)
+        filters.append(Prospect.revenue_inr <= revenue_max_inr)
     if listed_status == "listed":
-        query = query.where(Prospect.listed_exchange.isnot(None))  # type: ignore[union-attr]
+        filters.append(Prospect.listed_exchange.isnot(None))  # type: ignore[union-attr]
     elif listed_status == "unlisted":
-        query = query.where(Prospect.listed_exchange.is_(None))  # type: ignore[union-attr]
+        filters.append(Prospect.listed_exchange.is_(None))  # type: ignore[union-attr]
 
-    sort_col = getattr(Prospect, sort_by, Prospect.fit_score)
-    query = query.order_by(sort_col.desc() if sort_order == "desc" else sort_col.asc())
+    for f in filters:
+        query = query.where(f)
 
-    count_result = await db.exec(select(Prospect))  # type: ignore[arg-type]
-    all_results = count_result.all()
-    total = len(all_results)
+    sort_column = getattr(Prospect, sort_by, Prospect.company_name)
+    if sort_order == "desc":
+        query = query.order_by(sort_column.desc().nulls_last())
+    else:
+        query = query.order_by(sort_column.asc().nulls_last())
+
+    from sqlmodel import func
+    count_stmt = select(func.count()).select_from(Prospect)
+    for f in filters:
+        count_stmt = count_stmt.where(f)
+    count_result = await db.exec(count_stmt)  # type: ignore[arg-type]
+    total = count_result.one()
 
     offset = (page - 1) * page_size
     query = query.offset(offset).limit(page_size)
@@ -88,11 +108,22 @@ async def get_prospect(prospect_id: UUID, db: DBSession) -> APIResponse[Prospect
     if prospect is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prospect not found")
 
+    from app.schemas.prospects import FinancialHealth
+    from app.utils.indian_formats import format_inr
+
+    rev = prospect.revenue_inr
+    revenue_band = None
+    financial_health = None
+    if rev and rev > 0:
+        revenue_band = format_inr(rev, compact=True)
+        financial_health = FinancialHealth(revenue_inr=rev)
+
     detail = ProspectDetail(
         id=prospect.id,
         company_name=prospect.company_name,
         industry=prospect.industry,
         nic_code=prospect.nic_code,
+        revenue_band_inr=revenue_band,
         employee_count=prospect.employee_count,
         state=prospect.state,
         city=prospect.city,
@@ -105,6 +136,7 @@ async def get_prospect(prospect_id: UUID, db: DBSession) -> APIResponse[Prospect
         fit_score=prospect.fit_score,
         confidence=prospect.fit_score_confidence,
         last_enriched=prospect.last_enriched_at,
+        financial_health=financial_health,
     )
     return APIResponse(data=detail)
 

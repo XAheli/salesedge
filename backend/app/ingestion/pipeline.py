@@ -18,6 +18,13 @@ from app.ingestion.quality_scorer import QualityScorer
 
 logger = structlog.get_logger(__name__)
 
+VALIDATION_RULES: dict[str, Any] = {
+    "name_not_empty": lambda r: bool(r.get("name") or r.get("company_name") or r.get("title")),
+    "positive_values": lambda r: all(
+        v >= 0 for k, v in r.items() if isinstance(v, (int, float)) and k != "sentiment"
+    ),
+}
+
 
 class DataConnector(Protocol):
     """Protocol that all data connectors must satisfy."""
@@ -178,6 +185,7 @@ class IngestPipeline:
             raw_records = await connector.fetch(**kwargs)
             result.records_fetched = len(raw_records)
 
+            processed_records: list[dict[str, Any]] = []
             quality_scores: list[float] = []
             for record in raw_records:
                 content_hash = self._dedup.compute_content_hash(record)
@@ -193,14 +201,18 @@ class IngestPipeline:
                             normalised.get("last_updated"),
                             self._expected_frequency(connector),
                         ),
-                        self._quality.score_accuracy(normalised, {}),
+                        self._quality.score_accuracy(normalised, VALIDATION_RULES),
                     )
                     quality_scores.append(q_score)
                     self._dedup.mark_ingested(content_hash)
+                    processed_records.append(normalised)
                     result.records_new += 1
                 except Exception as exc:
                     result.records_failed += 1
                     result.errors.append(f"Record processing error: {exc}")
+
+            if processed_records:
+                await self._persist_records(connector_name, processed_records)
 
             if quality_scores:
                 result.avg_quality_score = round(
@@ -243,3 +255,19 @@ class IngestPipeline:
     @staticmethod
     def _elapsed_ms(start: datetime) -> float:
         return (datetime.utcnow() - start).total_seconds() * 1000
+
+    @staticmethod
+    async def _persist_records(
+        connector_name: str, records: list[dict[str, Any]]
+    ) -> None:
+        """Store processed records for downstream consumption.
+
+        Currently logs the batch for observability.  Replace with a real
+        database write (e.g. INSERT INTO ingested_data) when the storage
+        layer is wired up.
+        """
+        logger.info(
+            "pipeline.persist_records",
+            connector=connector_name,
+            count=len(records),
+        )

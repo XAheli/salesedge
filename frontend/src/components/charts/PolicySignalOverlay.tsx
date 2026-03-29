@@ -180,6 +180,23 @@ export const PolicySignalOverlay = memo(function PolicySignalOverlay({
           </>
         )}
       </div>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {markers.length > 0 && (
+            <p>Policy events: {markers.map((m) => `${m.date} — ${m.label} (${m.type})`).join("; ")}.</p>
+          )}
+          {periods.length > 0 && (
+            <p>Policy periods: {periods.map((p) => `${p.startDate}–${p.endDate}: ${p.label}`).join("; ")}.</p>
+          )}
+          {data.map((d, i) => (
+            <p key={i}>
+              {d.date}: {series.map((s) => `${s.label}=${d[s.key] ?? "–"}`).join(", ")}
+            </p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

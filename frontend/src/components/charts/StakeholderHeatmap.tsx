@@ -29,7 +29,8 @@ export const StakeholderHeatmap = memo(function StakeholderHeatmap({
   }));
 
   return (
-    <div className={`h-[320px] ${className}`}>
+    <div className={`${className}`}>
+      <div className="h-[320px]">
       <ResponsiveHeatMap
         data={nivoData}
         margin={{ top: 40, right: 20, bottom: 20, left: 100 }}
@@ -69,6 +70,18 @@ export const StakeholderHeatmap = memo(function StakeholderHeatmap({
         animate
         motionConfig="gentle"
       />
+      </div>
+
+      <details className="mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {data.map((row) => (
+            <p key={row.stakeholder}>
+              {row.stakeholder}: Email={row.email}, Call={row.call}, Meeting={row.meeting}, Demo={row.demo}
+            </p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

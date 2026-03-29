@@ -103,17 +103,27 @@ class ZerodhaConnector(BaseConnector):
 
     async def get_instruments(
         self, exchange: str | None = None
-    ) -> dict[str, Any]:
-        """Download the full instrument list (CSV-backed, cached 24 h)."""
-        path = "/instruments"
-        if exchange:
-            path = f"/instruments/{exchange}"
-        return await self._request(
-            "GET",
-            path,
-            cache_key=f"zerodha:instruments:{exchange or 'all'}",
-            cache_ttl=86_400,
-        )
+    ) -> list[dict[str, Any]]:
+        """Download the full instrument list (CSV-backed, cached 24 h).
+
+        The Kite instruments endpoint returns CSV, not JSON, so we bypass
+        the default ``_request`` JSON parser and handle the response directly.
+        """
+        import csv
+        import io
+
+        import httpx
+
+        path = f"/instruments/{exchange}" if exchange else "/instruments"
+        url = f"{self.base_url}{path}"
+        headers: dict[str, str] = {}
+        self._apply_auth(headers, {})
+
+        async with httpx.AsyncClient(timeout=30) as client:
+            resp = await client.get(url, headers=headers)
+            resp.raise_for_status()
+            reader = csv.DictReader(io.StringIO(resp.text))
+            return list(reader)
 
     async def get_ltp(
         self, instruments: list[str]

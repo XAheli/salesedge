@@ -132,6 +132,18 @@ export const DataFreshness = memo(function DataFreshness({
           </div>
         );
       })}
+
+      <details className="col-span-full mt-3 text-xs text-text-secondary">
+        <summary className="cursor-pointer font-medium">View as text</summary>
+        <div className="mt-1 max-h-40 overflow-y-auto">
+          {items.map((item) => (
+            <p key={item.name}>
+              {item.name}: {formatDuration(item.minutes)} ago ({STATUS_CONFIG[item.status].label})
+              {item.sla ? `, SLA: ${item.sla}min` : ""}
+            </p>
+          ))}
+        </div>
+      </details>
     </div>
   );
 });

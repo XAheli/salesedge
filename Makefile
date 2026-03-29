@@ -11,11 +11,17 @@ help:  ## Show this help
 bootstrap:  ## One-command project setup
 	bash scripts/bootstrap.sh
 
-dev:  ## Start full development stack
-	docker-compose -f docker-compose.dev.yml up
+dev:  ## Start backend + frontend together (one command)
+	@echo "Starting backend on :8000 and frontend on :5173..."
+	@echo "Press Ctrl+C to stop both."
+	@echo ""
+	@set -a; source .env 2>/dev/null || true; set +a; \
+	(cd backend && source .venv/bin/activate && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload) & \
+	(cd frontend && npm run dev -- --host 0.0.0.0 --port 5173) & \
+	wait
 
 dev-backend:  ## Start backend only
-	cd backend && source .venv/bin/activate && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+	cd backend && set -a && source ../.env 2>/dev/null && set +a && source .venv/bin/activate && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 
 dev-frontend:  ## Start frontend only
 	cd frontend && npm run dev -- --host 0.0.0.0 --port 5173

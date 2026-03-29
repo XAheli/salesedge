@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: salesedge
+  labels:
+    app.kubernetes.io/name: salesedge
+    app.kubernetes.io/part-of: salesedge
+    app.kubernetes.io/managed-by: kubectl

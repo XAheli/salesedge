@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: salesedge-backend
+  namespace: salesedge
+  labels:
+    app: salesedge-backend
+    app.kubernetes.io/name: salesedge-backend
+    app.kubernetes.io/component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: salesedge-backend
+  template:
+    metadata:
+      labels:
+        app: salesedge-backend
+    spec:
+      containers:
+        - name: backend
+          image: salesedge-backend:latest
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          env:
+            - name: SE_DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: salesedge-secrets
+                  key: database-url
+            - name: SE_REDIS_URL
+              value: redis://salesedge-redis:6379/0
+            - name: SE_OGD_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: salesedge-secrets
+                  key: ogd-api-key
+            - name: SE_JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: salesedge-secrets
+                  key: jwt-secret
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 40
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: "1"
+              memory: 1Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: salesedge-backend
+  namespace: salesedge
+  labels:
+    app: salesedge-backend
+spec:
+  type: ClusterIP
+  selector:
+    app: salesedge-backend
+  ports:
+    - port: 8000
+      targetPort: 8000
+      protocol: TCP
+      name: http
