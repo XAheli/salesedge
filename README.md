@@ -6,13 +6,9 @@
 
 <p align="center"><strong>Intelligent Sales & Revenue Operations Platform</strong></p>
 
-<p align="center">
-  <a href="https://github.com/XAheli/salesedge">GitHub</a> · MIT License
-</p>
 
 An India-focused AI platform for enterprise sales teams. Integrates government data (data.gov.in, RBI, MOSPI, SEBI), Indian market data (NSE, BSE), and 25+ financial APIs to power prospect intelligence, deal risk scoring, churn prediction, and competitive analysis.
 
----
 
 ## How to Run Locally
 
@@ -187,8 +183,3 @@ Browser → http://localhost:5173
 
 See the [deployment section](#deploy-to-production) or use `render.yaml` (Render) + `frontend/vercel.json` (Vercel).
 
----
-
-## License
-
-MIT · Shuvam Banerji Seal, Aheli Poddar, Alok Mishra
