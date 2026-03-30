@@ -6,15 +6,30 @@ from datetime import datetime, timedelta
 import bcrypt
 from fastapi import APIRouter, HTTPException, status
 from jose import jwt
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from sqlmodel import select
 
 from app.config import get_settings
 from app.dependencies import CurrentUser, DBSession
-from app.models.user import User
+from app.models.user import User, VALID_ROLES
 from app.schemas.common import APIResponse
 
 router = APIRouter()
+
+_ROLE_ALIASES: dict[str, str] = {
+    "admin": "admin",
+    "sales manager": "sales_manager",
+    "sales_manager": "sales_manager",
+    "manager": "sales_manager",
+    "sales rep": "sales_rep",
+    "sales_rep": "sales_rep",
+    "rep": "sales_rep",
+    "analyst": "analyst",
+    "viewer": "viewer",
+    "cxo": "viewer",
+    "executive": "viewer",
+    "cxo / executive": "viewer",
+}
 
 
 def _hash_password(password: str) -> str:
@@ -25,6 +40,20 @@ def _verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode("utf-8"), hashed.encode("utf-8"))
 
 
+def _normalize_role(raw_role: str) -> str:
+    cleaned = " ".join(raw_role.strip().lower().replace("_", " ").replace("-", " ").split())
+    mapped = _ROLE_ALIASES.get(cleaned)
+    if mapped is not None:
+        return mapped
+
+    candidate = cleaned.replace(" ", "_")
+    if candidate in VALID_ROLES:
+        return candidate
+
+    allowed = ", ".join(sorted(VALID_ROLES))
+    raise ValueError(f"Invalid role '{raw_role}'. Allowed roles: {allowed}")
+
+
 class RegisterRequest(BaseModel):
     name: str
     email: str
@@ -32,10 +61,25 @@ class RegisterRequest(BaseModel):
     role: str = "viewer"
     organization: str | None = None
 
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower()
+
+    @field_validator("role")
+    @classmethod
+    def normalize_role(cls, value: str) -> str:
+        return _normalize_role(value)
+
 
 class LoginRequest(BaseModel):
     email: str
     password: str
+
+    @field_validator("email")
+    @classmethod
+    def normalize_email(cls, value: str) -> str:
+        return value.strip().lower()
 
 
 class AuthResponse(BaseModel):

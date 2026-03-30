@@ -80,6 +80,13 @@ Thumbs.db
 .eslintcache
 .stylelintcache
 
+# Local archive/task artifacts
+*.tar
+*.tar.gz
+*.tar.bz2
+*.tar.xz
+things_to_do.md
+
 # Jupyter
 .ipynb_checkpoints/
 

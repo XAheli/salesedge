@@ -9,6 +9,11 @@ from sqlmodel import Field, SQLModel
 VALID_ROLES = {"admin", "sales_manager", "sales_rep", "analyst", "viewer"}
 
 
+def _utcnow_naive() -> datetime:
+    # Database columns use TIMESTAMP WITHOUT TIME ZONE, so store UTC as naive.
+    return datetime.now(timezone.utc).replace(tzinfo=None)
+
+
 class User(SQLModel, table=True):
     __tablename__ = "users"
 
@@ -20,5 +25,5 @@ class User(SQLModel, table=True):
     organization: str | None = Field(default=None, max_length=255)
     timezone: str = Field(default="Asia/Kolkata")
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=_utcnow_naive)
+    updated_at: datetime = Field(default_factory=_utcnow_naive)

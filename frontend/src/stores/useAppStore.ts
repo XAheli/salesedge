@@ -165,11 +165,13 @@ export const useAppStore = create<AppState>()(
           userProfile: { ...profile, initials: computeInitials(profile.name) || "SE" },
         }),
 
-      logout: () =>
+      logout: () => {
+        localStorage.removeItem("salesedge-token");
         set({
           isAuthenticated: false,
           userProfile: { name: "", email: "", role: "Admin", timezone: "Asia/Kolkata (IST)", initials: "SE" },
-        }),
+        });
+      },
     }),
     {
       name: "salesedge-app",
